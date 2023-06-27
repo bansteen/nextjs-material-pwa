@@ -8,14 +8,14 @@ export function DefaultMenuItems({
   return (
     <>
       <AppMenuItem link={{ href: '/app' }} onClick={onClick}>
-        Home
+        Community Structure
       </AppMenuItem>
-      <AppMenuItem link={{ href: '/app/settings' }} onClick={onClick}>
-        Settings
+      <AppMenuItem link={{ href: '/app/page2' }} onClick={onClick}>
+        Change in connections
       </AppMenuItem>
-      <AppMenuItem link={{ href: '/onboarding' }} onClick={onClick}>
+      {/* <AppMenuItem link={{ href: '/onboarding' }} onClick={onClick}>
         Onboarding
-      </AppMenuItem>
+      </AppMenuItem> */}
     </>
   )
 }

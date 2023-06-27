@@ -36,7 +36,7 @@ module.exports = {
     'no-dupe-class-members': 'off',
     'no-useless-constructor': 'off',
     '@typescript-eslint/no-useless-constructor': 'off',
-    'prettier/prettier': ['error'],
+    'prettier/prettier': 0,
     'lines-between-class-members': ['error', 'always'],
     'padding-line-between-statements': [
       'error',

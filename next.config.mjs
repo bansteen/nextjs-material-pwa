@@ -12,6 +12,11 @@ const bundleAnalyzer = withBundleAnalyzer({
  */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'export',
+  distDir: '_static',
+  images: {
+    unoptimized: true
+  },
   workbox: {
     // enable: process.env.NODE_ENV !== 'production',
     enable: process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === 'true',
