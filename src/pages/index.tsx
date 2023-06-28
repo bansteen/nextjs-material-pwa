@@ -1,19 +1,12 @@
 import { Global } from '@emotion/react'
-import { cookies } from 'lib/shared/config'
-import Cookies from 'js-cookie'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React from 'react'
 
 export default function Index() {
   const router = useRouter()
-  const handleAppLaunch = (e: React.MouseEvent) => {
-    if (!Cookies.get(cookies.slideshowShown.name) || e.ctrlKey) {
-      Cookies.set(cookies.slideshowShown.name, '1')
-      router.push('/onboarding')
-    } else {
-      router.push('/app')
-    }
+  const handleAppLaunch = () => {
+    router.push('/app')
   }
 
   return (
@@ -43,7 +36,7 @@ export default function Index() {
         }}
       >
         <h1 css={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: 0 }}>
-          Next.js Material PWA
+          DeNA Network Science
         </h1>
         <div
           css={{
@@ -63,14 +56,6 @@ export default function Index() {
             padding: '0 12px'
           }}
         >
-          <p>
-            When you launch the app for the first time, there will be a simple
-            onboarding slideshow, that will only be shown once.
-          </p>
-          <p>
-            If you like to see the onboarding again, hold down the{' '}
-            <strong>ctrl/command</strong> when launching the app.
-          </p>
         </div>
         <a
           onClick={handleAppLaunch}

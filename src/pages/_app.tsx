@@ -42,7 +42,7 @@ export default function MyApp(props: MyAppProps) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="description"
-          content="Next.js PWA application made with material-ui"
+          content="Network Science Next.js PWA application made with material-ui"
           key="description"
         />
         <meta
@@ -62,7 +62,7 @@ export default function MyApp(props: MyAppProps) {
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        <meta name="apple-mobile-web-app-title" content="Next.js PWA APP" />
+        <meta name="apple-mobile-web-app-title" content="DeNA Network Science" />
       </Head>
       {Component.layout ? (
         Component.layout(Component, pageProps)

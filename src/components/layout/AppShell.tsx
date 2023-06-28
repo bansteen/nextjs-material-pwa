@@ -61,7 +61,7 @@ export function AppShell({
   return (
     <>
       <Head>
-        <title>Next.js PWA</title>
+        <title>DeNA Network Science</title>
         {state.showApp ? (
           <meta
             name="theme-color"
