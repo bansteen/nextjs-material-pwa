@@ -107,11 +107,20 @@ export function AppShell({
             },
             pt: {
               md: 0
-            }
+            },
+            ml: 0,
+            mr: 0
           }}
         >
           <Offset />
-          <Container maxWidth="md" disableGutters>
+          <Container 
+          sx={{
+            mt: 0, // Change this value to adjust the top margin
+            mb: 0, // Change this value to adjust the bottom margin
+            ml: 0, // Change this value to adjust the bottom margin
+            mr: 0, // Change this value to adjust the bottom margin
+            mx: 'auto', // This centers the container horizontally
+          }}>
             {children}
           </Container>
           <Box

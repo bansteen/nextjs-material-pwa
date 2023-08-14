@@ -2,11 +2,27 @@ import { Global } from '@emotion/react'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React from 'react'
+import { initFirebase } from '../../firebaseapp'
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Index() {
+  initFirebase()
+  const provider = new GoogleAuthProvider()
+  const auth = getAuth()
   const router = useRouter()
+
+  const signIn =async () => {
+    const result = await signInWithPopup(auth, provider)
+    if (result.user.email?.endsWith("dena.jp")) {
+      router.push('/app')
+    }else {
+      toast("You don't have permission");
+    }
+  }
   const handleAppLaunch = () => {
-    router.push('/app')
+    signIn()  
   }
 
   return (
@@ -74,6 +90,7 @@ export default function Index() {
         >
           Launch Application
         </a>
+        <ToastContainer />
       </div>
     </>
   )
