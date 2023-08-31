@@ -49,7 +49,7 @@ const initialState = {
     /iPad|iPhone|iPod/.test(navigator.userAgent),
   theme: 'light',
   showApp: false,
-  showBottomNav: true,
+  showBottomNav: false,
   title: ''
 }
 

@@ -1,11 +1,65 @@
 import { AppLayout } from 'components/layout'
-import { useEffect } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import vis from 'vis-network';
+import { makeStyles } from '@material-ui/core/styles';
+import { Select, MenuItem } from '@material-ui/core';
 import { DataSet } from 'vis-data';
-
+import type { Node, Edge } from 'vis-network';
+import { jsonData, broadcasterData, TimeFrameData, ParamsDataSet } from '../../graphData/graphDataChangeConnections';
 type Color = string | vis.Color | undefined;
 
+const useStyles = makeStyles((theme) => ({
+  container: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    padding: '0px',
+    boxSizing: 'border-box',
+    margin: '0 auto',
+  },
+  box: {
+    width: '390px',
+    height: '300px',
+    // flex: 1,
+    backgroundColor: 'black',
+    padding: '0px',
+    margin: '0px',
+    boxSizing: 'border-box',
+  },
+  emptyBox: {
+    width: '390px',
+    height: '300px',
+    // flex: 1,
+    //backgroundColor: 'lightgray',
+    padding: '0px',
+    margin: '0px',
+    boxSizing: 'border-box',
+  },
+  menu: {
+    // position: 'fixed',
+    marginTop: '16px',
+    // right: '20px',
+    zIndex: 1000, // Adjust the z-index as needed
+    display: 'flex',
+    alignItems: 'center',
+  },
+}));
+
 export default function AppIndex() {
+  const classes = useStyles();
+  const [selectedSet, setSelectedSet] = useState('moms'); // Default selected set
+  const [selectedType, setSelectedType] = useState('coin'); // Default selected type
+  const [updateTrigger, setUpdateTrigger] = useState(true); // State for triggering useEffect
+
+  const handleParamChange = (event: ChangeEvent<{ value: unknown }>) => {
+    setSelectedType(event.target.value as string);
+    setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
+  };
+  const handleTypeChange = (event: ChangeEvent<{ value: unknown }>) => {
+    setSelectedSet(event.target.value as string);
+    setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
+  };
+  console.log(jsonData);
   useEffect(() => {
     let edges: DataSet<vis.Edge>;
     let nodes: DataSet<vis.Node>;
@@ -18,78 +72,22 @@ export default function AppIndex() {
     let options: vis.Options;
     let data: vis.Data;
 
-    function drawGraph() {
-      container = document.getElementById('mynetwork') as HTMLDivElement;
-
-      nodes = new DataSet<vis.Node>([
-        { color: "#97c2fc", id: 732576, label: "風喜(ふうき🍓)🧞🎸", shape: "dot", size: 12.979576003669171 },
-        { color: "#97c2fc", id: 1782690, label: "ノバフミヤ👶🏻🎤🎤", shape: "dot", size: 12.349263685722216 },
-        { color: "#97c2fc", id: 5208580, label: "🌻権里🌻3周年🎉", shape: "dot", size: 3.1290150749321373 },
-        { color: "#97c2fc", id: 2578378, label: "しろ🐰ིཀྀ", shape: "dot", size: 3.2800680965185367 },
-        { color: "#97c2fc", id: 2807281, label: "FUYU✖️🥁🛀🇣🇷", shape: "dot", size: 12.73281347289798 },
-        { color: "#97c2fc", id: 2669105, label: "ちゃぴ🧭‪‪ ‪\ud80c\ude12\ud80c\udff8", shape: "dot", size: 8.398948618082136 },
-        { color: "#97c2fc", id: 47089, label: "🥼airi🥼🦌", shape: "dot", size: 3.4887533059868776 },
-        { color: "#97c2fc", id: 4004536, label: "🌃🌼Yurry🌼🌃", shape: "dot", size: 5.029547118662518 },
-        { color: "#97c2fc", id: 6526586, label: "おやちけあきんぴ✍️🥚🐚", shape: "dot", size: 10.52475737309722 },
-        { color: "#97c2fc", id: 1782872, label: "育休👶🏻ちろるちょこ💚♪̈♪̆", shape: "dot", size: 1.7039767246444233 },
-        { color: "#97c2fc", id: 2719772, label: "あいりー🎤🐈", shape: "dot", size: 13.976841608505092 },
-        { color: "#97c2fc", id: 788063, label: "Sharo🐰🌙✨", shape: "dot", size: 12.406438917281692 },
-      ]);
-
-      edges = new DataSet<vis.Edge>([
-        { arrows: 'to', from: 4004536, to: 732576 },
-        { arrows: 'to', from: 1782690, to: 732576 },
-        { arrows: 'to', from: 2807281, to: 732576 },
-        { arrows: 'to', from: 6526586, to: 2807281 },
-        { arrows: 'to', from: 2669105, to: 2807281 },
-        { arrows: 'to', from: 1782690, to: 2669105 },
-        { arrows: 'to', from: 2669105, to: 1782690 },
-        { arrows: 'to', from: 732576, to: 1782690 },
-        { arrows: 'to', from: 1782690, to: 2807281 },
-        { arrows: 'to', from: 788063, to: 6526586 },
-        { arrows: 'to', from: 732576, to: 6526586 },
-        { arrows: 'to', from: 1782690, to: 6526586 },
-        { arrows: 'to', from: 2719772, to: 6526586 },
-        { arrows: 'to', from: 2669105, to: 2719772 },
-        { arrows: 'to', from: 2719772, to: 2807281 },
-        { arrows: 'to', from: 2719772, to: 788063 },
-        { arrows: 'to', from: 1782690, to: 788063 },
-        { arrows: 'to', from: 6526586, to: 788063 },
-        { arrows: 'to', from: 732576, to: 788063 },
-        { arrows: 'to', from: 788063, to: 2719772 },
-        { arrows: 'to', from: 732576, to: 2578378 },
-        { arrows: 'to', from: 2807281, to: 788063 },
-        { arrows: 'to', from: 2669105, to: 47089 },
-        { arrows: 'to', from: 788063, to: 1782690 },
-        { arrows: 'to', from: 2719772, to: 2669105 },
-        { arrows: 'to', from: 732576, to: 4004536 },
-        { arrows: 'to', from: 732576, to: 2719772 },
-        { arrows: 'to', from: 4004536, to: 5208580 },
-        { arrows: 'to', from: 47089, to: 2669105 },
-        { arrows: 'to', from: 4004536, to: 2807281 },
-        { arrows: 'to', from: 2719772, to: 732576 },
-        { arrows: 'to', from: 1782872, to: 2807281 },
-        { arrows: 'to', from: 732576, to: 2807281 },
-        { arrows: 'to', from: 1782872, to: 732576 },
-        { arrows: 'to', from: 2719772, to: 1782690 },
-        { arrows: 'to', from: 6526586, to: 1782690 },
-        { arrows: 'to', from: 6526586, to: 732576 },
-        { arrows: 'to', from: 1782690, to: 4004536 },
-        { arrows: 'to', from: 6526586, to: 2719772 },
-        { arrows: 'to', from: 2807281, to: 2719772 },
-      ]);
+    function drawGraph(containerId: string, nodes: Node[], edges: Edge[], timeFrame: string) {
+      const container = document.getElementById(containerId) as HTMLDivElement;
+      const nodesDataSet = new DataSet<Node>(nodes);
+      const edgesDataSet = new DataSet<Edge>(edges);
 
       nodeColors = {};
-      allNodes = nodes.get({ returnType: 'Object' });
+      allNodes = nodesDataSet.get({ returnType: 'Object' });
       for (const nodeId in allNodes) {
         nodeColors[nodeId] = allNodes[nodeId].color;
       }
-      _allEdges = edges.get({ returnType: 'Object' });
+      _allEdges = edgesDataSet.get({ returnType: 'Object' });
       data = { nodes, edges };
 
       options = {
         configure: {
-          enabled: true,
+          enabled: false,
           filter: ['physics', 'nodes'],
         },
         edges: {
@@ -119,19 +117,95 @@ export default function AppIndex() {
         },
       };
 
-      options.configure.container = document.getElementById('config');
+      //options.configure.container = document.getElementById('config');
       network = new vis.Network(container, data, options);
       
+      // Set the <h3> header to the timeFrame string
+      const h3Element = container.parentElement?.querySelector('h3');
+      if (h3Element) {
+        h3Element.textContent = timeFrame;
+      }
+
       return network;
     }
-
-    drawGraph();
-  }, []);
+    if (updateTrigger) {
+      let selectedData: TimeFrameData[] = [];
+      switch (selectedSet) {
+        case 'beginner':
+          selectedData = (broadcasterData.beginnerFemale[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
+          break;
+        case 'moms':
+          selectedData = (broadcasterData.moms[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
+          break;
+        // Add more cases for additional sets
+        default:
+          break;
+      }
+      console.log(selectedType);
+      // Render the div elements for different time frames here
+      let counter = 1;
+      selectedData.forEach((timeFrameData: TimeFrameData) => {
+        const containerId = `mynetwork${counter}`;
+        drawGraph(containerId, timeFrameData.nodes, timeFrameData.edges, timeFrameData.timeFrame);
+        counter++;
+      });
+      // After performing the needed operations, reset the updateTrigger
+      setUpdateTrigger(false);
+    }
+  }, [selectedSet, selectedType, updateTrigger]);
 
   return (
     <div>
-      <div id="mynetwork" style={{ height: '600px' }}></div>
-      <div id="config"></div>
+      <div className={classes.container}>
+        <div className={classes.menu}>
+            <Select value={selectedSet} onChange={handleTypeChange}>
+              <MenuItem value="beginner">Beginner female</MenuItem>
+              <MenuItem value="moms">Moms</MenuItem>
+              {/* Add more options for additional sets */}
+            </Select>
+          </div>
+          <div className={classes.menu}>
+            <Select value={selectedType} onChange={handleParamChange}>
+              <MenuItem value="coin">Coin count</MenuItem>
+              <MenuItem value="comment">Comment count</MenuItem>
+              <MenuItem value="follow">Follow count</MenuItem>
+              <MenuItem value="gift">Gift count</MenuItem>
+              <MenuItem value="view">View count</MenuItem>
+              <MenuItem value="viewTotal">View total time count</MenuItem>
+              {/* Add more options for additional sets */}
+            </Select>
+          </div>
+      </div> 
+      <div className={classes.container}>
+        <div>
+          <h3>Date range1</h3>
+          <div id="mynetwork1" className={classes.box}>
+          </div>
+        </div>
+        <div>
+          <h3>Date range2</h3>
+          <div id="mynetwork2" className={classes.box}>
+          </div>
+        </div>
+        <div>
+          <h3>Date range3</h3>
+          <div id="mynetwork3" className={classes.box}>
+          </div>
+        </div>
+        <div>
+          <h3>Date range4</h3>
+          <div id="mynetwork4" className={classes.box}>
+          </div>
+        </div>
+        <div>
+          <h3>Date range5</h3>
+          <div id="mynetwork5" className={classes.box}></div>
+        </div>
+        <div>
+          <div id="empty" className={classes.emptyBox}></div>
+        </div>
+      </div>
+        <div id="config"></div>
     </div>
   );
 };

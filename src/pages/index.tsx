@@ -15,7 +15,7 @@ export default function Index() {
 
   const signIn =async () => {
     const result = await signInWithPopup(auth, provider)
-    if (result.user.email?.endsWith("dena.jp")) {
+    if (result.user.email?.endsWith("dena.jp") || result.user.email?.endsWith("dena.com")) {
       router.push('/app')
     }else {
       toast("You don't have permission");

@@ -1,11 +1,32 @@
 import { AppLayout } from 'components/layout'
-import { useEffect } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import vis from 'vis-network';
+import { makeStyles } from '@material-ui/core/styles';
 import { DataSet } from 'vis-data';
-
+import type { Node, Edge } from 'vis-network';
+import { communityData } from '../../graphData/graphDataCommunityStructure';
+import { Select, MenuItem } from '@material-ui/core';
 type Color = string | vis.Color | undefined;
 
+const useStyles = makeStyles((theme) => ({
+  menu: {
+    // position: 'fixed',
+    marginTop: '16px',
+    // right: '20px',
+    zIndex: 1000, // Adjust the z-index as needed
+    display: 'flex',
+    alignItems: 'center',
+  },
+}));
+
 export default function AppIndex() {
+  const classes = useStyles();
+  const [selectedSet, setSelectedSet] = useState('set1'); // Default selected set
+  const [updateTrigger, setUpdateTrigger] = useState(true); // State for triggering useEffect
+  const handleSetChange = (event: ChangeEvent<{ value: unknown }>) => {
+    setSelectedSet(event.target.value as string); 
+    setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
+  };
   useEffect(() => {
     let edges: DataSet<vis.Edge>;
     let nodes: DataSet<vis.Node>;
@@ -18,78 +39,22 @@ export default function AppIndex() {
     let options: vis.Options;
     let data: vis.Data;
 
-    function drawGraph() {
-      container = document.getElementById('mynetwork') as HTMLDivElement;
-
-      nodes = new DataSet<vis.Node>([
-        { color: "#97c2fc", id: 732576, label: "風喜(ふうき🍓)🧞🎸", shape: "dot", size: 12.979576003669171 },
-        { color: "#97c2fc", id: 1782690, label: "ノバフミヤ👶🏻🎤🎤", shape: "dot", size: 12.349263685722216 },
-        { color: "#97c2fc", id: 5208580, label: "🌻権里🌻3周年🎉", shape: "dot", size: 3.1290150749321373 },
-        { color: "#97c2fc", id: 2578378, label: "しろ🐰ིཀྀ", shape: "dot", size: 3.2800680965185367 },
-        { color: "#97c2fc", id: 2807281, label: "FUYU✖️🥁🛀🇣🇷", shape: "dot", size: 12.73281347289798 },
-        { color: "#97c2fc", id: 2669105, label: "ちゃぴ🧭‪‪ ‪\ud80c\ude12\ud80c\udff8", shape: "dot", size: 8.398948618082136 },
-        { color: "#97c2fc", id: 47089, label: "🥼airi🥼🦌", shape: "dot", size: 3.4887533059868776 },
-        { color: "#97c2fc", id: 4004536, label: "🌃🌼Yurry🌼🌃", shape: "dot", size: 5.029547118662518 },
-        { color: "#97c2fc", id: 6526586, label: "おやちけあきんぴ✍️🥚🐚", shape: "dot", size: 10.52475737309722 },
-        { color: "#97c2fc", id: 1782872, label: "育休👶🏻ちろるちょこ💚♪̈♪̆", shape: "dot", size: 1.7039767246444233 },
-        { color: "#97c2fc", id: 2719772, label: "あいりー🎤🐈", shape: "dot", size: 13.976841608505092 },
-        { color: "#97c2fc", id: 788063, label: "Sharo🐰🌙✨", shape: "dot", size: 12.406438917281692 },
-      ]);
-
-      edges = new DataSet<vis.Edge>([
-        { arrows: 'to', from: 4004536, to: 732576 },
-        { arrows: 'to', from: 1782690, to: 732576 },
-        { arrows: 'to', from: 2807281, to: 732576 },
-        { arrows: 'to', from: 6526586, to: 2807281 },
-        { arrows: 'to', from: 2669105, to: 2807281 },
-        { arrows: 'to', from: 1782690, to: 2669105 },
-        { arrows: 'to', from: 2669105, to: 1782690 },
-        { arrows: 'to', from: 732576, to: 1782690 },
-        { arrows: 'to', from: 1782690, to: 2807281 },
-        { arrows: 'to', from: 788063, to: 6526586 },
-        { arrows: 'to', from: 732576, to: 6526586 },
-        { arrows: 'to', from: 1782690, to: 6526586 },
-        { arrows: 'to', from: 2719772, to: 6526586 },
-        { arrows: 'to', from: 2669105, to: 2719772 },
-        { arrows: 'to', from: 2719772, to: 2807281 },
-        { arrows: 'to', from: 2719772, to: 788063 },
-        { arrows: 'to', from: 1782690, to: 788063 },
-        { arrows: 'to', from: 6526586, to: 788063 },
-        { arrows: 'to', from: 732576, to: 788063 },
-        { arrows: 'to', from: 788063, to: 2719772 },
-        { arrows: 'to', from: 732576, to: 2578378 },
-        { arrows: 'to', from: 2807281, to: 788063 },
-        { arrows: 'to', from: 2669105, to: 47089 },
-        { arrows: 'to', from: 788063, to: 1782690 },
-        { arrows: 'to', from: 2719772, to: 2669105 },
-        { arrows: 'to', from: 732576, to: 4004536 },
-        { arrows: 'to', from: 732576, to: 2719772 },
-        { arrows: 'to', from: 4004536, to: 5208580 },
-        { arrows: 'to', from: 47089, to: 2669105 },
-        { arrows: 'to', from: 4004536, to: 2807281 },
-        { arrows: 'to', from: 2719772, to: 732576 },
-        { arrows: 'to', from: 1782872, to: 2807281 },
-        { arrows: 'to', from: 732576, to: 2807281 },
-        { arrows: 'to', from: 1782872, to: 732576 },
-        { arrows: 'to', from: 2719772, to: 1782690 },
-        { arrows: 'to', from: 6526586, to: 1782690 },
-        { arrows: 'to', from: 6526586, to: 732576 },
-        { arrows: 'to', from: 1782690, to: 4004536 },
-        { arrows: 'to', from: 6526586, to: 2719772 },
-        { arrows: 'to', from: 2807281, to: 2719772 },
-      ]);
+    function drawGraph(containerId: string, nodes: Node[], edges: Edge[]) {
+      const container = document.getElementById(containerId) as HTMLDivElement;
+      const nodesDataSet = new DataSet<Node>(nodes);
+      const edgesDataSet = new DataSet<Edge>(edges);
 
       nodeColors = {};
-      allNodes = nodes.get({ returnType: 'Object' });
+      allNodes = nodesDataSet.get({ returnType: 'Object' });
       for (const nodeId in allNodes) {
         nodeColors[nodeId] = allNodes[nodeId].color;
       }
-      _allEdges = edges.get({ returnType: 'Object' });
+      _allEdges = edgesDataSet.get({ returnType: 'Object' });
       data = { nodes, edges };
 
       options = {
         configure: {
-          enabled: true,
+          enabled: false,
           filter: ['physics', 'nodes'],
         },
         edges: {
@@ -119,17 +84,43 @@ export default function AppIndex() {
         },
       };
 
-      options.configure.container = document.getElementById('config');
+      //options.configure.container = document.getElementById('config');
       network = new vis.Network(container, data, options);
       
       return network;
     }
-
-    drawGraph();
-  }, []);
+    if (updateTrigger) {
+      switch (selectedSet) {
+        case 'set1':
+          console.log("set 1 is drawn");
+          drawGraph('mynetwork', communityData.community1.nodes, communityData.community1.edges);
+          break;
+        case 'set2':
+          console.log("set 2 is drawn");
+          drawGraph('mynetwork', communityData.community2.nodes, communityData.community2.edges);
+          break;
+        case 'set3':
+          console.log("set 3 is drawn");
+          drawGraph('mynetwork', communityData.community3.nodes, communityData.community3.edges);
+          break;          
+        // Add more cases for additional sets
+        default:
+          break;
+      }
+    }
+    setUpdateTrigger(false);
+  }, [selectedSet, updateTrigger]);
 
   return (
     <div>
+      <div className={classes.menu}>
+          <Select value={selectedSet} onChange={handleSetChange}>
+            <MenuItem value="set1">Community 1</MenuItem>
+            <MenuItem value="set2">Community 2</MenuItem>
+            <MenuItem value="set3">Community 3</MenuItem>
+            {/* Add more options for additional sets */}
+          </Select>
+        </div>
       <div id="mynetwork" style={{ height: '600px' }}></div>
       <div id="config"></div>
     </div>
