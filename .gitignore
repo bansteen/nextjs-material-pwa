@@ -46,3 +46,7 @@ yarn-error.log*
 
 # pnpm store
 .pnpm-store
+
+_static/
+.firebase/
+network-science-397616-953b495eee71.json

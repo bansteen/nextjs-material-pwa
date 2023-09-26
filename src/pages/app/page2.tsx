@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Select, MenuItem } from '@material-ui/core';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
-import { jsonData, broadcasterData, TimeFrameData, ParamsDataSet } from '../../graphData/graphDataChangeConnections';
+import {broadcasterData, TimeFrameData, ParamsDataSet } from '../../graphData/graphDataChangeConnections';
 type Color = string | vis.Color | undefined;
 
 const useStyles = makeStyles((theme) => ({
@@ -59,7 +59,6 @@ export default function AppIndex() {
     setSelectedSet(event.target.value as string);
     setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
   };
-  console.log(jsonData);
   useEffect(() => {
     let edges: DataSet<vis.Edge>;
     let nodes: DataSet<vis.Node>;
