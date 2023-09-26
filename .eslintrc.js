@@ -45,19 +45,7 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/explicit-module-boundary-types': ['off'],
     '@typescript-eslint/no-non-null-assertion': ['off'],
-    '@typescript-eslint/member-delimiter-style': [
-      'error',
-      {
-        multiline: {
-          delimiter: 'none',
-          requireLast: false
-        },
-        singleline: {
-          delimiter: 'semi',
-          requireLast: false
-        }
-      }
-    ],
+    'semi': 'off',
     '@typescript-eslint/no-unused-vars': [
       'error',
       { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }

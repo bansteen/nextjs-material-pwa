@@ -111,11 +111,3 @@ export const broadcasterData: MainData = {
     ],
   },
 };
-
-// Accessing specific data:
-// const momCoinTimeFrame1Nodes = broadcasterData["Mom Community"].coin["Time Frame 1"].nodes;
-// const momCoinTimeFrame1Edges = broadcasterData["Mom Community"].coin["Time Frame 1"].edges;
-
-// // Accessing specific data for another community and set:
-// const beginnerViewTotalTimeFrame3Nodes = broadcasterData["Beginner Female Community"].viewTotal["Time Frame 3"].nodes;
-// const beginnerViewTotalTimeFrame3Edges = broadcasterData["Beginner Female Community"].viewTotal["Time Frame 3"].edges;

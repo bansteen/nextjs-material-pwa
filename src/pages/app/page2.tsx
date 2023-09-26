@@ -8,7 +8,7 @@ import type { Node, Edge } from 'vis-network';
 import {broadcasterData, TimeFrameData, ParamsDataSet } from '../../graphData/graphDataChangeConnections';
 type Color = string | vis.Color | undefined;
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   container: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -95,16 +95,14 @@ export default function AppIndex() {
         console.error('Error fetching data:', error);
         // Handle the error here
       } finally {
+        setLoading(false); // Stop loading indicator when API call completes
       }
     }
-    let edges: DataSet<vis.Edge>;
-    let nodes: DataSet<vis.Node>;
     let allNodes: Record<string, vis.Node>;
     let _allEdges: Record<string, vis.Edge>;
     let nodeColors: Record<string, Color>;
     //let originalNodes: any;
     let network: vis.Network;
-    let container: HTMLDivElement;
     let options: vis.Options;
     let data: vis.Data;
 
