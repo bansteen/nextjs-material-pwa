@@ -2,7 +2,7 @@ import { AppLayout } from 'components/layout'
 import { useEffect, useState, ChangeEvent } from 'react';
 import vis from 'vis-network';
 import { makeStyles } from '@material-ui/core/styles';
-import { Select, MenuItem } from '@material-ui/core';
+import { Select, MenuItem, CircularProgress, Grid } from '@material-ui/core';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
 import {broadcasterData, TimeFrameData, ParamsDataSet } from '../../graphData/graphDataChangeConnections';
@@ -43,6 +43,12 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
   },
+  progressContainer: {
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 }));
 
 export default function AppIndex() {
@@ -50,6 +56,7 @@ export default function AppIndex() {
   const [selectedSet, setSelectedSet] = useState('mom'); // Default selected set
   const [selectedType, setSelectedType] = useState('coins'); // Default selected type
   const [updateTrigger, setUpdateTrigger] = useState(true); // State for triggering useEffect
+  const [loading, setLoading] = useState(false); // State for API loading indicator
 
   const handleParamChange = (event: ChangeEvent<{ value: unknown }>) => {
     setSelectedType(event.target.value as string);
@@ -60,6 +67,36 @@ export default function AppIndex() {
     setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
   };
   useEffect(() => {
+    async function fetchData(selectedData: TimeFrameData[]) {
+      try {
+        setLoading(true); // Start loading indicator when API call begins
+
+        const dataSetId = `change_connections_${selectedSet}_${selectedType}`;
+        const apiUrl = `https://networkdata.onrender.com/api/data/${dataSetId}`;
+        
+        const response = await fetch(apiUrl);
+        setLoading(false); // Stop loading indicator when API call completes
+        if (!response.ok) {
+          throw new Error('Failed to fetch data from the server');
+        }
+
+        const data = await response.json();
+        // Render the div elements for different time frames here
+        let counter = 1;
+        selectedData.forEach((timeFrameData: TimeFrameData) => {
+          const containerId = `mynetwork${counter}`;
+          drawGraph(containerId, timeFrameData.nodes, timeFrameData.edges, timeFrameData.timeFrame);
+          counter++;
+        });
+        // Process and use the data as needed
+        console.log(data);
+      } catch (error) {
+        setLoading(false); // Stop loading indicator when API call completes
+        console.error('Error fetching data:', error);
+        // Handle the error here
+      } finally {
+      }
+    }
     let edges: DataSet<vis.Edge>;
     let nodes: DataSet<vis.Node>;
     let allNodes: Record<string, vis.Node>;
@@ -135,19 +172,13 @@ export default function AppIndex() {
           break;
         case 'mom':
           selectedData = (broadcasterData.moms[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
+          fetchData(selectedData)
           break;
         // Add more cases for additional sets
         default:
           break;
       }
       console.log(selectedType);
-      // Render the div elements for different time frames here
-      let counter = 1;
-      selectedData.forEach((timeFrameData: TimeFrameData) => {
-        const containerId = `mynetwork${counter}`;
-        drawGraph(containerId, timeFrameData.nodes, timeFrameData.edges, timeFrameData.timeFrame);
-        counter++;
-      });
       // After performing the needed operations, reset the updateTrigger
       setUpdateTrigger(false);
     }
@@ -165,7 +196,7 @@ export default function AppIndex() {
           </div>
           <div className={classes.menu}>
             <Select value={selectedType} onChange={handleParamChange}>
-              <MenuItem value="coin">Coin count</MenuItem>
+              <MenuItem value="coins">Coin count</MenuItem>
               <MenuItem value="comment">Comment count</MenuItem>
               <MenuItem value="follow">Follow count</MenuItem>
               <MenuItem value="gift">Gift count</MenuItem>
@@ -174,38 +205,44 @@ export default function AppIndex() {
               {/* Add more options for additional sets */}
             </Select>
           </div>
-      </div> 
-      <div className={classes.container}>
-        <div>
-          <h3>Date range1</h3>
-          <div id="mynetwork1" className={classes.box}>
-          </div>
-        </div>
-        <div>
-          <h3>Date range2</h3>
-          <div id="mynetwork2" className={classes.box}>
-          </div>
-        </div>
-        <div>
-          <h3>Date range3</h3>
-          <div id="mynetwork3" className={classes.box}>
-          </div>
-        </div>
-        <div>
-          <h3>Date range4</h3>
-          <div id="mynetwork4" className={classes.box}>
-          </div>
-        </div>
-        <div>
-          <h3>Date range5</h3>
-          <div id="mynetwork5" className={classes.box}></div>
-        </div>
-        <div>
-          <div id="empty" className={classes.emptyBox}></div>
-        </div>
       </div>
+      {loading ? (
+        <Grid container className={classes.progressContainer}>
+          <CircularProgress />
+        </Grid>
+      ) : (
+        <div className={classes.container}>
+          <div>
+            <h3>Date range1</h3>
+            <div id="mynetwork1" className={classes.box}>
+            </div>
+          </div>
+          <div>
+            <h3>Date range2</h3>
+            <div id="mynetwork2" className={classes.box}>
+            </div>
+          </div>
+          <div>
+            <h3>Date range3</h3>
+            <div id="mynetwork3" className={classes.box}>
+            </div>
+          </div>
+          <div>
+            <h3>Date range4</h3>
+            <div id="mynetwork4" className={classes.box}>
+            </div>
+          </div>
+          <div>
+            <h3>Date range5</h3>
+            <div id="mynetwork5" className={classes.box}></div>
+          </div>
+          <div>
+            <div id="empty" className={classes.emptyBox}></div>
+          </div>
+        </div>
+      )} 
         <div id="config"></div>
-    </div>
+      </div>
   );
 };
 AppIndex.layout = AppLayout
