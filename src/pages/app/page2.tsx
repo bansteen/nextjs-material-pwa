@@ -47,8 +47,8 @@ const useStyles = makeStyles((theme) => ({
 
 export default function AppIndex() {
   const classes = useStyles();
-  const [selectedSet, setSelectedSet] = useState('moms'); // Default selected set
-  const [selectedType, setSelectedType] = useState('coin'); // Default selected type
+  const [selectedSet, setSelectedSet] = useState('mom'); // Default selected set
+  const [selectedType, setSelectedType] = useState('coins'); // Default selected type
   const [updateTrigger, setUpdateTrigger] = useState(true); // State for triggering useEffect
 
   const handleParamChange = (event: ChangeEvent<{ value: unknown }>) => {
@@ -130,10 +130,10 @@ export default function AppIndex() {
     if (updateTrigger) {
       let selectedData: TimeFrameData[] = [];
       switch (selectedSet) {
-        case 'beginner':
+        case 'beggFemale':
           selectedData = (broadcasterData.beginnerFemale[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
           break;
-        case 'moms':
+        case 'mom':
           selectedData = (broadcasterData.moms[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
           break;
         // Add more cases for additional sets
@@ -158,8 +158,8 @@ export default function AppIndex() {
       <div className={classes.container}>
         <div className={classes.menu}>
             <Select value={selectedSet} onChange={handleTypeChange}>
-              <MenuItem value="beginner">Beginner female</MenuItem>
-              <MenuItem value="moms">Moms</MenuItem>
+              <MenuItem value="beggFemale">Beginner female</MenuItem>
+              <MenuItem value="mom">Moms</MenuItem>
               {/* Add more options for additional sets */}
             </Select>
           </div>
