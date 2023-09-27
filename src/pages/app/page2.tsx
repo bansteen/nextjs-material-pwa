@@ -1,11 +1,12 @@
 import { AppLayout } from 'components/layout'
 import { useEffect, useState, ChangeEvent } from 'react';
 import vis from 'vis-network';
-import { makeStyles } from '@material-ui/core/styles';
-import { Select, MenuItem, CircularProgress, Grid } from '@material-ui/core';
+import { makeStyles } from '@mui/styles';
+import { Select, MenuItem, CircularProgress, Grid } from '@mui/material';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
-import {broadcasterData, TimeFrameData, ParamsDataSet } from '../../graphData/graphDataChangeConnections';
+import {broadcasterData, TimeFrameData, ParamsDataSet, ServerResponseItem, transformResponse } from '../../graphData/graphDataChangeConnections';
+import * as iconv from 'iconv-lite';
 type Color = string | vis.Color | undefined;
 
 const useStyles = makeStyles(() => ({
@@ -67,7 +68,7 @@ export default function AppIndex() {
     setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
   };
   useEffect(() => {
-    async function fetchData(selectedData: TimeFrameData[]) {
+    async function fetchData() {
       try {
         setLoading(true); // Start loading indicator when API call begins
 
@@ -75,15 +76,26 @@ export default function AppIndex() {
         const apiUrl = `https://networkdata.onrender.com/api/data/${dataSetId}`;
         
         const response = await fetch(apiUrl);
+        
+        
         setLoading(false); // Stop loading indicator when API call completes
         if (!response.ok) {
           throw new Error('Failed to fetch data from the server');
         }
-
-        const data = await response.json();
+        
+        const serverData: ServerResponseItem[] = await response.json();
+        const transformedData = transformResponse(serverData); 
+        console.log(transformedData)
         // Render the div elements for different time frames here
+        // let counter = 1;
+        // selectedData.forEach((timeFrameData: TimeFrameData) => {
+        //   const containerId = `mynetwork${counter}`;
+        //   drawGraph(containerId, timeFrameData.nodes, timeFrameData.edges, timeFrameData.timeFrame);
+        //   counter++;
+        // });
+
         let counter = 1;
-        selectedData.forEach((timeFrameData: TimeFrameData) => {
+        transformedData.forEach((timeFrameData) => {
           const containerId = `mynetwork${counter}`;
           drawGraph(containerId, timeFrameData.nodes, timeFrameData.edges, timeFrameData.timeFrame);
           counter++;
@@ -150,9 +162,11 @@ export default function AppIndex() {
           },
         },
       };
+      
 
       //options.configure.container = document.getElementById('config');
       network = new vis.Network(container, data, options);
+      
       
       // Set the <h3> header to the timeFrame string
       const h3Element = container.parentElement?.querySelector('h3');
@@ -166,11 +180,10 @@ export default function AppIndex() {
       let selectedData: TimeFrameData[] = [];
       switch (selectedSet) {
         case 'beggFemale':
-          selectedData = (broadcasterData.beginnerFemale[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
+          fetchData()
           break;
         case 'mom':
-          selectedData = (broadcasterData.moms[selectedType as keyof ParamsDataSet] as TimeFrameData[]) || [];
-          fetchData(selectedData)
+          fetchData()
           break;
         // Add more cases for additional sets
         default:
@@ -199,7 +212,7 @@ export default function AppIndex() {
               <MenuItem value="follow">Follow count</MenuItem>
               <MenuItem value="gift">Gift count</MenuItem>
               <MenuItem value="view">View count</MenuItem>
-              <MenuItem value="viewTotal">View total time count</MenuItem>
+              <MenuItem value="totalTime">View total time count</MenuItem>
               {/* Add more options for additional sets */}
             </Select>
           </div>

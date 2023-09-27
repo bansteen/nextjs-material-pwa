@@ -20,6 +20,86 @@ interface MainData {
   "moms": ParamsDataSet;
   "beginnerFemale": ParamsDataSet;
 }
+export interface ServerResponseItem {
+  tableName: string;
+  data: {
+      user_id: string;
+      target_user_id: string;
+      [key: string]: string | number; // To handle the dynamic last key like "follow_2023_03_07_2023_03_13"
+  }[];
+}
+
+interface TransformedNode {
+  color: string;
+  font: { color: string };
+  id: string;
+  label: string;
+  shape: string;
+  size: number;
+}
+
+interface TransformedEdge {
+  arrows: string;
+  from: string;
+  to: string;
+  width: number;
+}
+
+interface TransformedData {
+  timeFrame: string;
+  nodes: TransformedNode[];
+  edges: TransformedEdge[];
+}
+
+export function transformResponse(serverResponse: ServerResponseItem[]): TransformedData[] {
+  const transformedData: TransformedData[] = [];
+
+  serverResponse.forEach(entry => {
+    const nodes: TransformedNode[] = [];
+    const edges: TransformedEdge[] = [];
+
+    entry.data.forEach(item => {
+      const nodeId = item.user_id;
+      const targetNodeId = item.target_user_id;
+
+      // Check if the node with the same ID already exists
+      if (!nodes.find(node => node.id === nodeId)) {
+        nodes.push({
+          color: "#97c2fc",
+          font: { color: "white" },
+          id: nodeId,
+          label: nodeId,
+          shape: "dot",
+          size: 12
+        });
+      }
+
+      // Check if the edge with the same IDs already exists
+      if (!edges.find(edge => edge.from === nodeId && edge.to === targetNodeId)) {
+        edges.push({
+          arrows: "to",
+          from: nodeId,
+          to: targetNodeId,
+          width: Number(Object.values(item).slice(-1)[0]) // Convert to number
+        });
+      }
+    });
+
+    transformedData.push({
+      timeFrame: entry.tableName,
+      nodes: nodes,
+      edges: edges
+    });
+  });
+
+  return transformedData;
+}
+
+
+// Sample usage
+// const serverData: ServerResponseItem[] = [{"tableName":"2023-03-07-2023-03-13","data":[{"user_id":"�� [���ñ","target_user_id":"���ç","follow_2023_03_07_2023_03_13":1}]} /*... other entries ... */];
+// const transformedData: TransformedData[] = transformResponse(serverData);
+// console.log(transformedData);
 
 export const broadcasterData: MainData = {
   "moms": {

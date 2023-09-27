@@ -1,11 +1,11 @@
 import { AppLayout } from 'components/layout'
 import { useEffect, useState, ChangeEvent } from 'react';
 import vis from 'vis-network';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/styles';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
 import { communityData } from '../../graphData/graphDataCommunityStructure';
-import { Select, MenuItem } from '@material-ui/core';
+import { Select, MenuItem } from '@mui/material';
 type Color = string | vis.Color | undefined;
 
 const useStyles = makeStyles(() => ({
