@@ -1,12 +1,12 @@
 import { AppLayout } from 'components/layout'
-import { useEffect, useState, ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import vis from 'vis-network';
 import { makeStyles } from '@mui/styles';
 import { Select, MenuItem, CircularProgress, Grid } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
-import {broadcasterData, TimeFrameData, ParamsDataSet, ServerResponseItem, transformResponse } from '../../graphData/graphDataChangeConnections';
-import * as iconv from 'iconv-lite';
+import {ServerResponseItem, transformResponse } from '../../graphData/graphDataChangeConnections';
 type Color = string | vis.Color | undefined;
 
 const useStyles = makeStyles(() => ({
@@ -59,11 +59,11 @@ export default function AppIndex() {
   const [updateTrigger, setUpdateTrigger] = useState(true); // State for triggering useEffect
   const [loading, setLoading] = useState(false); // State for API loading indicator
 
-  const handleParamChange = (event: ChangeEvent<{ value: unknown }>) => {
+  const handleParamChange = (event: SelectChangeEvent<string>) => {
     setSelectedType(event.target.value as string);
     setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
   };
-  const handleTypeChange = (event: ChangeEvent<{ value: unknown }>) => {
+  const handleTypeChange = (event: SelectChangeEvent<string>) => {
     setSelectedSet(event.target.value as string);
     setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
   };
@@ -177,7 +177,6 @@ export default function AppIndex() {
       return network;
     }
     if (updateTrigger) {
-      let selectedData: TimeFrameData[] = [];
       switch (selectedSet) {
         case 'beggFemale':
           fetchData()
