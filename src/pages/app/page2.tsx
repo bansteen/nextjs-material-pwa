@@ -2,7 +2,21 @@ import { AppLayout } from 'components/layout'
 import { useEffect, useState } from 'react';
 import vis from 'vis-network';
 import { makeStyles } from '@mui/styles';
-import { Select, MenuItem, CircularProgress, Grid } from '@mui/material';
+import {
+  Select, 
+  MenuItem, 
+  CircularProgress, 
+  Grid,
+  TextField,
+  InputLabel,
+  FormControl,
+  Slider,
+  Switch,
+  Button,
+  Divider,
+  Box,
+  Typography,
+} from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
@@ -50,6 +64,14 @@ const useStyles = makeStyles(() => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  menuItem: {
+    fontSize: 10,
+  },
+  customTextField: {
+    fontSize: 10,
+    width: '100%',
+    height: 30, // Set the desired height here
+  },
 }));
 
 export default function AppIndex() {
@@ -66,6 +88,10 @@ export default function AppIndex() {
   const handleTypeChange = (event: SelectChangeEvent<string>) => {
     setSelectedSet(event.target.value as string);
     setUpdateTrigger(!updateTrigger); // Toggle the updateTrigger value
+  };
+  const [isWeekly, setIsWeekly] = useState(false);
+  const handleSwitchChange = () => {
+    setIsWeekly(!isWeekly);
   };
   useEffect(() => {
     async function fetchData() {
@@ -196,25 +222,88 @@ export default function AppIndex() {
 
   return (
     <div>
-      <div className={classes.container}>
-        <div className={classes.menu}>
-            <Select value={selectedSet} onChange={handleTypeChange}>
-              <MenuItem value="beggFemale">Beginner female</MenuItem>
-              <MenuItem value="mom">Moms</MenuItem>
-              {/* Add more options for additional sets */}
+      <div style={{ display: 'flex', flexDirection: 'column'}}>
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            alignItems: 'center',
+            paddingTop: '8px',
+            paddingBottom: '8px',
+          }}
+        >
+          <Box style={{width: 100, marginRight: '8px'}}>
+            <Select style={{ fontSize: 10, height:30}} value={selectedSet} onChange={handleTypeChange}>
+              <MenuItem className={classes.menuItem} value="beggFemale">Beginner female</MenuItem>
+              <MenuItem className={classes.menuItem} value="mom">Moms</MenuItem>
             </Select>
-          </div>
-          <div className={classes.menu}>
-            <Select value={selectedType} onChange={handleParamChange}>
-              <MenuItem value="coins">Coin count</MenuItem>
-              <MenuItem value="comment">Comment count</MenuItem>
-              <MenuItem value="follow">Follow count</MenuItem>
-              <MenuItem value="gift">Gift count</MenuItem>
-              <MenuItem value="view">View count</MenuItem>
-              <MenuItem value="totalTime">View total time count</MenuItem>
-              {/* Add more options for additional sets */}
+          </Box>
+          <Box style={{ width: 260, marginRight: '8px'}}>
+            <InputLabel style={{ fontSize: 10}}>Enter user IDs separated by comma</InputLabel>
+            <TextField
+              InputProps={{
+                style: { fontSize: 10, height: '30px' },
+              }}
+              style={{ width: '100%' }}
+            />
+          </Box>
+
+          <Divider orientation="vertical" flexItem/>
+
+          <Box style={{ width: 160, marginRight: '8px'}}>
+            <InputLabel style={{ fontSize: 10}}>Visualization period</InputLabel>
+            <TextField
+              InputProps={{
+                style: { fontSize: 10, height: '30px' },
+              }}
+              style={{ width: '100%' }}
+              type = "month"
+            />
+          </Box>
+
+          <Box style={{ width: 128, marginRight: '8px', display: 'flex', alignItems: 'center' }}>
+            <Typography style={{ fontSize: 10, color: !isWeekly ? 'blue' : 'initial', cursor: 'pointer' }} onClick={() => handleSwitchChange()}>Weekly</Typography>
+            <Switch
+              checked={isWeekly}
+              onChange={handleSwitchChange}
+            />
+            <Typography style={{ fontSize: 10, color: !isWeekly ? 'initial' : 'blue', cursor: 'pointer' }} onClick={() => handleSwitchChange()}>Monthly</Typography>
+          </Box>
+          <Divider orientation="vertical" flexItem />
+
+          <Box style={{ width: 140,  marginLeft: '8px' }}>
+            <InputLabel style={{ fontSize: 10}}>Edge Types</InputLabel>
+            <Select style={{ fontSize: 10, height:30}} value={selectedType} onChange={handleParamChange}>
+              <MenuItem className={classes.menuItem} value="coins">Coins</MenuItem>
+              <MenuItem className={classes.menuItem} value="comment">Comments</MenuItem>
+              <MenuItem className={classes.menuItem} value="follow">Follows</MenuItem>
+              <MenuItem className={classes.menuItem} value="gift">Gifts</MenuItem>
+              <MenuItem className={classes.menuItem} value="view">Views</MenuItem>
+              <MenuItem className={classes.menuItem} value="totalTime">Total time</MenuItem>
             </Select>
-          </div>
+          </Box>
+
+          <Box style={{ width: 80, marginRight: '8px'}}>
+            <InputLabel style={{ fontSize: 10}}>Edge Threshold</InputLabel>
+            <TextField
+              InputProps={{
+                style: { fontSize: 10, height: '30px' },
+              }}
+              style={{ width: '100%' }}
+            />
+          </Box>
+
+          <Divider orientation="vertical" flexItem />
+
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ height: 30, width: 48, marginLeft: '16px',}}
+          >
+            Run
+          </Button>
+        </div>
+        <Divider />
       </div>
       {loading ? (
         <Grid container className={classes.progressContainer}>
