@@ -7,7 +7,8 @@ export interface TimeFrameData {
 }
 
 export interface ServerResponseItem {
-  date: { value: string };
+  week?:string;//weekly response has week instead of date/month
+  date?: { value: string };
   month?: { value: string };//some response has month instead of date
   source: string;
   source_name: string;
@@ -39,40 +40,42 @@ interface TransformedData {
   edges: TransformedEdge[];
 }
 
-export function transformResponse(serverResponse: ServerResponseItem[], startDate: Date, showName: boolean): TransformedData[] {
+export function transformResponse(serverResponse: ServerResponseItem[],
+                                  startDate: Date, 
+                                  showName: boolean,
+                                  userIds:string,
+  ): TransformedData[] {
+  console.log(userIds)
+  const userIdArray = userIds.split(',');
   const transformedData: TransformedData[] = [];
   const groupedData: Record<string, ServerResponseItem[]> = {};
-  const weekGroups = getWeeklyGroups(startDate);
-  const firstEntry = serverResponse[0]
-  if(firstEntry) {
-    if(!firstEntry.month){
-      weekGroups.forEach(weekKey => {
-        groupedData[weekKey]= []
-      });  
-    }
-  }
+  // const weekGroups = getWeeklyGroups(startDate);
+  // const firstEntry = serverResponse[0]
+  // if(firstEntry) {
+  //   if(!firstEntry.month){
+  //     weekGroups.forEach(weekKey => {
+  //       groupedData[weekKey]= []
+  //     });  
+  //   }
+  // }
   
   serverResponse.forEach(entry => {
-    const dateField = entry.month ? entry.month.value : entry.date.value;
-    const date = new Date(dateField);
 
     if (entry.month) {
+      const date = new Date(entry.month.value);
       // Handle monthly response
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
       if (!groupedData[monthKey]) {
         groupedData[monthKey] = [];
       }
       groupedData[monthKey].push(entry);
-    } else {
-      weekGroups.forEach(weekKey => {
-        if (date >= new Date(weekKey.split(' to ')[0]) && 
-        date <= new Date(weekKey.split(' to ')[1])) {
-          if (!groupedData[weekKey]) {
-            groupedData[weekKey] = [];
-          }
-          groupedData[weekKey].push(entry);
-        }
-      });      
+    } else if (entry.week) {
+      const weekValue = entry.week; // Get the week value from the response
+      // Find the index of the week value in weekGroups
+      if (!groupedData[weekValue]) {
+        groupedData[weekValue] = [];
+      }
+      groupedData[weekValue].push(entry);
     }
   });
 
@@ -89,18 +92,17 @@ export function transformResponse(serverResponse: ServerResponseItem[], startDat
       const weightValue = entry.weight !== undefined ? entry.weight : entry.sum_coin || 1;
       let calculatedWeight = weightValue
       if(entry.weight !== undefined){
-        //core
-        //4*np.log10(yell_score/1000)+1
         calculatedWeight = 4 * Math.log(weightValue / 1000) + 1;
       } else {
-        //coin np.log10(coin_count)+1
         calculatedWeight = Math.log(weightValue) + 1;
       }
       // Check if the node with the same ID already exists
       if (!nodes.find(node => node.id === nodeId)) {
+      const nodeMatchesUserId = userIdArray.includes(nodeId);
+      const nodeColor = nodeMatchesUserId ? "#FFFF00" : "#1400FF"; // Change to yellow if it matches userIds
         nodes.push({
-          color: "#97c2fc",
-          font: { color: "white" },
+          color: nodeColor,
+          font: { color: "#000000" },
           id: nodeId,
           label: nodeLabel,
           shape: "dot",
@@ -108,9 +110,12 @@ export function transformResponse(serverResponse: ServerResponseItem[], startDat
         });
       }
       if (!nodes.find(node => node.id === targetNodeId)) {
+
+        const nodeMatchesUserId = userIdArray.includes(targetNodeId);
+        const nodeColor = nodeMatchesUserId ? "#FFFF00" : "#1400FF"; // Change to yellow if it matches userIds
         nodes.push({
-          color: "#97c2fc",
-          font: { color: "white" },
+          color: nodeColor,
+          font: { color: "#000000" },
           id: targetNodeId,
           label: targetLabel,
           shape: "dot",
@@ -125,7 +130,6 @@ export function transformResponse(serverResponse: ServerResponseItem[], startDat
           to: targetNodeId,
           width: calculatedWeight
         });
-        console.log("weightValue: "+ weightValue)
       }
     });
 
@@ -140,7 +144,7 @@ export function transformResponse(serverResponse: ServerResponseItem[], startDat
 }
 
 
-function getWeeklyGroups(startDate: Date): string[] {
+/*function getWeeklyGroups(startDate: Date): string[] {
   const weekGroups: string[] = [];
   const daysInWeek = 7;
   const weeksToGenerate = 5;
@@ -150,8 +154,8 @@ function getWeeklyGroups(startDate: Date): string[] {
   const weekEnd = new Date(startDate);
   weekEnd.setDate(startDate.getDate() - 1)
   for (let i = 0; i < weeksToGenerate; i++) {
-    console.log("startDate:" + nextWeekStart)
-    console.log("endDate:" + weekEnd)
+    //console.log("startDate:" + nextWeekStart)
+    //console.log("endDate:" + weekEnd)
     weekGroups.push(getWeekRange(nextWeekStart, weekEnd));
     nextWeekStart.setDate(nextWeekStart.getDate() + daysInWeek); // Move to the next week start
     weekEnd.setDate(weekEnd.getDate() + daysInWeek);
@@ -171,4 +175,4 @@ function formatDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
-}
+}*/
