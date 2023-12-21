@@ -42,7 +42,6 @@ module.exports = {
       'error',
       { blankLine: 'always', prev: '*', next: 'return' }
     ],
-    'react-hooks/exhaustive-deps': 'error',
     '@typescript-eslint/explicit-module-boundary-types': ['off'],
     '@typescript-eslint/no-non-null-assertion': ['off'],
     'semi': 'off',

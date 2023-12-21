@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import vis from 'vis-network';
 import { makeStyles } from '@mui/styles';
+import { useRouter } from 'next/router';
 import {
   Select, 
   MenuItem, 
@@ -101,7 +102,7 @@ interface Networks {
   [key: string]: vis.Network | undefined;
 }
 export default function AppIndex() {
-
+  const router = useRouter();
   const [networks, setNetworks] = useState<Networks>({}); 
   const classes = useStyles();
   const [selectedType, setSelectedType] = useState('Core Fan'); // Default selected type
@@ -113,28 +114,33 @@ export default function AppIndex() {
   const [coreFan, setCoreFan] = useState(true);
   const [showName, setShowName] = useState(false);
   const [egoNetwork, setEgoNetwork] = useState(false);
+  const [tableName, setTablename] = useState('monthly_yell_core');
   const [userIdError, setUserIdError] = useState(false);
   const [dateError, setDateError] = useState(false);
   const runButtonRef = useRef<HTMLButtonElement | null>(null);
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [weight, setWeight] = useState(''); // State for the date input
+  const [weight, setWeight] = useState('0'); // State for the date input
   const handleParamChange = (event: SelectChangeEvent<string>) => {
     setSelectedType(event.target.value as string);
     if(event.target.value == "Core Fan"){
       setIsMonthly(true)
       setCoreFan(true)
+      setTablename(isMonthly ? 'monthly_yell_core' : 'daily_yell_core')
     } else {
       setCoreFan(false)
+      setTablename(isMonthly ? 'monthly_coin_usage' : 'daily_coin_usage')
     }
   };
   const handleSwitchChange = () => {
     if(coreFan){
       setIsMonthly(true)
+      setTablename('monthly_yell_core')
     } else {
+      setTablename(!isMonthly ? 'monthly_coin_usage' : 'daily_coin_usage')
       setIsMonthly(!isMonthly);
+      setDate('');
     }
-    setDate('');
   };
   const handleEgoNetworkChange = () => {
     setEgoNetwork(!egoNetwork);
@@ -158,27 +164,42 @@ export default function AppIndex() {
   const handleWeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setWeight(event.target.value);
   };
-  const handleUpdateClick = () => {
+  const handleRunClick = () => {
+    let generateUrl = false
     if (userIds.trim() === '') {
       setUserIdError(true);
+      generateUrl = false
       if (runButtonRef.current) {
         runButtonRef.current.focus();
       }
     } else {
+      generateUrl = true
       setUserIdError(false);
     }
   
     if (date.trim() === '') {
+      generateUrl = false
       setDateError(true);
       if (runButtonRef.current) {
         runButtonRef.current.focus();
       }
     } else {
+      generateUrl = true
       setDateError(false);
     }
   
-    if (!userIdError || !dateError) {
-      setUpdateTrigger(!updateTrigger);
+    if (generateUrl) {
+      const queryParams = {
+        edge_type: tableName,
+        start_date: date,
+        userids: userIds,
+        egonet: egoNetwork?'on':'off',
+        showname: showName?'on':'off',
+        edge_threshold: weight,
+      };
+      const queryString = new URLSearchParams(queryParams).toString();
+      const newUrl = `/app/?${queryString}`;
+      router.push(newUrl);
     }
   };
   const handleStopClick = () => {
@@ -207,17 +228,69 @@ export default function AppIndex() {
     };
   }, []); // Empty dependency array ensures this effect runs only once
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true); // Start loading indicator when API call begins
-
-        let tableName = '';
-        if (selectedType === 'Core Fan') {
-          tableName = isMonthly ? 'monthly_yell_core' : 'daily_yell_core';
-        } else if (selectedType === 'Coins') {
-          tableName = isMonthly ? 'monthly_coin_usage' : 'daily_coin_usage';
+    // Accessing query parameters
+    const { query } = router;
+    // Accessing specific parameters
+    const { edge_type, start_date, userids, egonet, showname, edge_threshold} = query;
+    if(edge_type !=undefined && start_date != undefined && userids != undefined
+      && egonet != undefined && showname != undefined) {
+        const edgeTypeString = edge_type.toString()
+        const startDateString = start_date.toString()
+        const egonetString = egonet.toString()
+        const shownameString = showname.toString()
+        const isMonthly = edgeTypeString.startsWith('month')
+        const egoNet = egonetString == 'on'
+        const showName = shownameString == 'on'
+        const edgeThresholdString = edge_threshold?.toString() || '0'
+        console.log("edgeThresholdString:"+edgeThresholdString)
+        setIsMonthly(isMonthly)
+        setDate(startDateString)
+        setEgoNetwork(egoNet)
+        setShowName(showName)
+        setTablename(edgeTypeString)
+        setWeight(edgeThresholdString)
+        switch(edgeTypeString) {
+          case 'daily_yell_core':
+            setSelectedType('Core Fan')
+            break
+          case 'monthly_yell_core':
+            setSelectedType('Core Fan')
+            break
+          case 'daily_coin_usage':
+            setSelectedType('Coin Usage')
+            break
+          case 'monthly_coin_usage':
+            setSelectedType('Coin Usage')
+            break              
         }
-        let dateParam = isMonthly?`date=${date}-01` : `date=${date}`;
+        if (userids && typeof userids === 'string') {
+          setUserIds(userids);
+          fetchData(edgeTypeString,userids,startDateString,isMonthly,egoNet,showName,edgeThresholdString)  
+        }
+    }
+    console.log('Edge Type:', edge_type);
+    console.log('Start Date:', start_date);
+    console.log('User IDs:', userids);
+    console.log('Egonet:', egonet);
+    console.log('Show Name:', showname);
+    if (updateTrigger) {
+      fetchData(tableName,userIds,date,isMonthly,egoNetwork,showName,weight)
+      setUpdateTrigger(false);
+    }
+
+    async function fetchData(tableName:string,
+                            userIds:string, 
+                            date:string, 
+                            isMonthly:boolean,
+                            egoNetwork:boolean,
+                            showName:boolean,
+                            weight: string) {
+      try {
+        if((userIds.length== 0)|| (date.length==0)){
+          return
+        }
+        setLoading(true); // Start loading indicator when API call begins
+        let dateParam = isMonthly?`date=${start_date}-01` : `date=${start_date}`;
         let query = `${tableName}?${dateParam}&userids=${userIds.replace(/\s/g, '')}`;
         if(weight.length > 0) {
           query+= `&weight=${weight}`
@@ -353,12 +426,7 @@ export default function AppIndex() {
       
       return network;
     }
-    if (updateTrigger) {
-      fetchData()
-      // After performing the needed operations, reset the updateTrigger
-      setUpdateTrigger(false);
-    }
-  }, [selectedType, updateTrigger, date, isMonthly, userIds, weight, egoNetwork, showName]);
+  }, [updateTrigger,JSON.stringify(router.query)]);
 
   return (
     <div>
@@ -398,7 +466,7 @@ export default function AppIndex() {
             <InputLabel style={{ fontSize: 10}}>Edge Types</InputLabel>
             <Select style={{ fontSize: 10, height:30, width: 100}} value={selectedType} onChange={handleParamChange}>
             <MenuItem className={classes.menuItem} value="Core Fan">Core Fan</MenuItem>
-            <MenuItem className={classes.menuItem} value="Coins">Coin Usage</MenuItem>
+            <MenuItem className={classes.menuItem} value="Coin Usage">Coin Usage</MenuItem>
             </Select>
           </Box>
           <Box style={{ width: 128,marginTop: '16px',marginLeft: '8px', marginRight: '8px', display: 'flex', alignItems: 'center' }}>
@@ -431,6 +499,7 @@ export default function AppIndex() {
                 style: { fontSize: 10, height: '30px' },
               }}
               style={{ width: '100%' }}
+              value={weight}
               onChange={handleWeightChange}
             />
           </Box>
@@ -450,7 +519,7 @@ export default function AppIndex() {
             variant="contained"
             color="primary"
             style={{ height: 30, width: 48, marginLeft: '16px'}}
-            onClick={handleUpdateClick}>
+            onClick={handleRunClick}>
             Run
           </Button>
           

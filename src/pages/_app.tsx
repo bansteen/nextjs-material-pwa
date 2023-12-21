@@ -3,13 +3,39 @@ import createEmotionCache from 'lib/server/createEmotionCache'
 import { NextPage } from 'next'
 import { AppProps } from 'next/app'
 import Head from 'next/head'
-
-// Client-side cache, shared for the whole session of the user in the browser.
+import { useRouter } from 'next/router'
+import { useEffect } from 'react'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { initFirebase } from '../../firebaseapp'
+import { ReactNode } from 'react'
+import React from 'react';
 const clientSideEmotionCache = createEmotionCache()
 
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache
 }
+
+interface AuthCheckerProps {
+  children: ReactNode
+}
+
+const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
+  const router = useRouter()
+  const auth = getAuth()
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user && router.pathname === '/app') {
+        router.replace('/') // Redirect to login page if user is not authenticated and accessing '/app'
+      }
+    })
+
+    return () => unsubscribe()
+  }, [router, auth])
+
+  return <>{children}</>
+}
+
 export type NextApplicationPage<P = {}, IP = P> = NextPage<P, IP> & {
   desktopSidebar?: (
     defaultMenuItems: JSX.Element | JSX.Element[]
@@ -17,7 +43,7 @@ export type NextApplicationPage<P = {}, IP = P> = NextPage<P, IP> & {
   mobileSidebar?: (defaultMenuItems: JSX.Element | JSX.Element[]) => JSX.Element
   layout?: (page: NextApplicationPage, props: any) => JSX.Element
 }
-
+initFirebase();
 export default function MyApp(props: MyAppProps) {
   const {
     Component,
@@ -63,12 +89,15 @@ export default function MyApp(props: MyAppProps) {
           content="black-translucent"
         />
         <meta name="apple-mobile-web-app-title" content="DeNA Network Science" />
+        {/* Include other meta tags or head elements as needed */}
       </Head>
-      {Component.layout ? (
-        Component.layout(Component, pageProps)
-      ) : (
-        <Component {...pageProps} />
-      )}
+      <AuthChecker>
+        {Component.layout ? (
+          Component.layout(Component, pageProps)
+        ) : (
+          <Component {...pageProps} />
+        )}
+      </AuthChecker>
     </CacheProvider>
   )
 }
