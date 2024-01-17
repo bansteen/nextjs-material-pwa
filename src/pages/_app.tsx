@@ -4,13 +4,23 @@ import { NextPage } from 'next'
 import { AppProps } from 'next/app'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { initFirebase } from '../../firebaseapp'
 import { ReactNode } from 'react'
 import React from 'react';
+import {createContext,useEffect } from 'react';
+export const UserEmailContext = createContext<string | null>(null);
+export function getUserEmail(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const email = user?.email || null;
+      resolve(email);
+      unsubscribe();
+    });
+  });
+}
 const clientSideEmotionCache = createEmotionCache()
-
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache
 }
@@ -22,14 +32,15 @@ interface AuthCheckerProps {
 const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
   const router = useRouter()
   const auth = getAuth()
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user && router.pathname === '/app') {
-        router.replace('/') // Redirect to login page if user is not authenticated and accessing '/app'
+      const authUser = user?.email?.endsWith("dena.jp") || user?.email?.endsWith("dena.com")
+      const isAppRoute = router.pathname.startsWith('/app');
+      if (isAppRoute && !authUser) {
+        router.replace('/');
       }
     })
-
+    
     return () => unsubscribe()
   }, [router, auth])
 
@@ -68,7 +79,7 @@ export default function MyApp(props: MyAppProps) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="description"
-          content="Network Science Next.js PWA application made with material-ui"
+          content="LiveLink application to view user networks"
           key="description"
         />
         <meta
@@ -88,7 +99,7 @@ export default function MyApp(props: MyAppProps) {
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        <meta name="apple-mobile-web-app-title" content="DeNA Network Science" />
+        <meta name="apple-mobile-web-app-title" content="LiveLink" />
         {/* Include other meta tags or head elements as needed */}
       </Head>
       <AuthChecker>

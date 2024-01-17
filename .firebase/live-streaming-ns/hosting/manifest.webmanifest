@@ -4,9 +4,9 @@
   "display": "standalone",
   "id": "material-pwa.vercel.app",
   "start_url": "/app",
-  "name": "Next.js PWA",
-  "short_name": "Next.js PWA",
-  "description": "Next.js PWA with Material Design demo",
+  "name": "LiveLink",
+  "short_name": "LiveLink",
+  "description": "Shows the network between uesrs",
   "orientation": "any",
   "icons": [
     {

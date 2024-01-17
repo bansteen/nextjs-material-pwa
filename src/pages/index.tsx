@@ -52,7 +52,7 @@ export default function Index() {
         }}
       >
         <h1 css={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: 0 }}>
-          DeNA Network Science
+          LiveLink
         </h1>
         <div
           css={{
@@ -63,7 +63,7 @@ export default function Index() {
             }
           }}
         >
-          <Image alt="" src="/landing-page.svg" width={400} height={300} />
+          <Image alt="" src="/ns.png" width={400} height={300} />
         </div>
         <div
           css={{

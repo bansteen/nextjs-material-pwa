@@ -61,7 +61,7 @@ export function AppShell({
   return (
     <>
       <Head>
-        <title>DeNA Network Science</title>
+        <title>LiveLink</title>
         {state.showApp ? (
           <meta
             name="theme-color"
@@ -80,11 +80,11 @@ export function AppShell({
         onOk={update}
         show={showPrompt}
       />
-      <InstallBanner
+      {/* <InstallBanner
         onCancel={() => hideInstallPrompt(false)}
         onOk={installPWA}
         show={showInstallPrompt}
-      />
+      /> */}
       <DisplayModeNotification />
       <AppUpdatedNotification cookieName={cookies.showAppUpdated.name} />
       <Box style={{ opacity: state.showApp ? 1 : 0 }} sx={{ display: 'flex' }}>

@@ -45,10 +45,6 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': ['off'],
     '@typescript-eslint/no-non-null-assertion': ['off'],
     'semi': 'off',
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }
-    ]
   },
   overrides: [
     {

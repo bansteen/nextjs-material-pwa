@@ -10,7 +10,7 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { Actions, useAppShell } from 'components/providers/AppShellProvider'
 import { ThemeSwitch } from 'components/ThemeSwitch'
-
+import HelpIcon from '@mui/icons-material/Help'; 
 export function AppToolbar() {
   const theme = useTheme()
 
@@ -39,7 +39,10 @@ export function AppToolbar() {
       payload: state.theme === 'dark' ? 'light' : 'dark'
     })
   }
-
+  const openUserManual = () => {
+    window.open('https://www.notion.so/pokota/146ea28e28064be89b7b45c68f3e6d6a', '_blank');
+  };
+  
   return (
     <AppBar
       color={theme.palette.mode === 'light' ? 'primary' : 'default'}
@@ -112,6 +115,18 @@ export function AppToolbar() {
               />
             </Box>
           </Hidden>
+          <IconButton
+            color="inherit"
+            aria-label="User Manual"
+            onClick={openUserManual}
+            sx={{ mr: 2 }}
+            size="large"
+          >
+            <HelpIcon />
+            <Typography variant="body1" color="inherit" sx={{ marginLeft: 1 }}>
+            User Manual
+          </Typography>
+          </IconButton>
           <ThemeSwitch
             checked={state.theme === 'dark'}
             onChange={toggleTheme}

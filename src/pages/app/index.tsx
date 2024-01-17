@@ -1,9 +1,10 @@
 import { AppLayout } from 'components/layout'
-import { useEffect, useState, useRef } from 'react';
-import React from 'react';
+import {useEffect, useState, useRef } from 'react';
 import vis from 'vis-network';
+import React from 'react';
 import { makeStyles } from '@mui/styles';
 import { useRouter } from 'next/router';
+import { getUserEmail } from '../_app'
 import {
   Select, 
   MenuItem, 
@@ -26,7 +27,8 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import { DataSet } from 'vis-data';
 import type { Node, Edge } from 'vis-network';
 import {ServerResponseItem, transformResponse } from '../../graphData/graphDataChangeConnections';
-
+import ModalLists from './modalGetLinks';
+import ModalAddLinks from './modalAddLinks';
 interface ErrorDialogProps {
   open: boolean;
   onClose: () => void;
@@ -110,6 +112,7 @@ export default function AppIndex() {
   const [loading, setLoading] = useState(false); // State for API loading indicator
   const [date, setDate] = useState(''); // State for the date input
   const [userIds, setUserIds] = useState(''); // State for user IDs input
+  const [email, setEmail] = useState(''); // State for user IDs input
   const [isMonthly, setIsMonthly] = useState(true);
   const [coreFan, setCoreFan] = useState(true);
   const [showName, setShowName] = useState(false);
@@ -119,6 +122,7 @@ export default function AppIndex() {
   const [dateError, setDateError] = useState(false);
   const runButtonRef = useRef<HTMLButtonElement | null>(null);
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
+  const [runPressed, setRunPressed] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [weight, setWeight] = useState('0'); // State for the date input
   const handleParamChange = (event: SelectChangeEvent<string>) => {
@@ -127,9 +131,12 @@ export default function AppIndex() {
       setIsMonthly(true)
       setCoreFan(true)
       setTablename(isMonthly ? 'monthly_yell_core' : 'daily_yell_core')
-    } else {
+    } else if(event.target.value == "Coin Usage"){
       setCoreFan(false)
       setTablename(isMonthly ? 'monthly_coin_usage' : 'daily_coin_usage')
+    }else if(event.target.value == "Item Usage"){
+      setCoreFan(false)
+      setTablename(isMonthly ? 'monthly_item_usage_count' : 'daily_item_usage_count')
     }
   };
   const handleSwitchChange = () => {
@@ -137,9 +144,16 @@ export default function AppIndex() {
       setIsMonthly(true)
       setTablename('monthly_yell_core')
     } else {
-      setTablename(!isMonthly ? 'monthly_coin_usage' : 'daily_coin_usage')
-      setIsMonthly(!isMonthly);
-      setDate('');
+      if(selectedType == 'Coin Usage') {
+        setTablename(!isMonthly ? 'monthly_coin_usage' : 'daily_coin_usage')
+        setIsMonthly(!isMonthly);
+        setDate('');
+      }else {
+        setTablename(!isMonthly ? 'monthly_item_usage_count' : 'daily_item_usage_count')
+        setIsMonthly(!isMonthly);
+        setDate('');
+      }
+      
     }
   };
   const handleEgoNetworkChange = () => {
@@ -199,6 +213,7 @@ export default function AppIndex() {
       };
       const queryString = new URLSearchParams(queryParams).toString();
       const newUrl = `/app/?${queryString}`;
+      setRunPressed(true)
       router.push(newUrl);
     }
   };
@@ -216,7 +231,47 @@ export default function AppIndex() {
       runButtonRef.current.click();
     }
   };
+  const [isModalGetLinksOpen, setIsModalGetLinksOpen] = useState(false);
+  const [isModalAddLinksOpen, setIsModalAddLinksOpen] = useState(false);
+  const [refreshLinks, setRefreshLinks] = useState(false);
+  const [isUserList, setIsUserList] = useState(false);
+  const handleOpenModalGetLinks = () => {
+    setIsModalGetLinksOpen(true);
+  };
+
+  const handleCloseModalGetLinks = (userIds?: string) => {
+    setIsModalGetLinksOpen(false);
+    if (userIds) {
+      setUserIds(userIds)
+    } else {
+      setUserIds('')
+    }
+  };
+
+  const handleOpenModalAddLinks = () => {
+    setIsModalAddLinksOpen(true);
+  };
+  const openAddLinksModal = (isUserList: boolean) => {
+    setIsModalAddLinksOpen(true);
+    setIsUserList(isUserList);
+  };
+  const handleCloseModalAddLinks = () => {
+    setIsModalAddLinksOpen(false);
+  };
+  const refreshLinksList = () => {
+    setRefreshLinks((prev) => !prev);
+  };
   useEffect(() => {
+    getUserEmail().then((userEmail) => {
+      if (userEmail) {
+        console.log("userEmail:"+userEmail)
+        setEmail(userEmail)
+        // Use userEmail in your logic here
+      } else {
+        console.log("userEmail:"+userEmail)
+        setEmail("Unknown")
+      }
+    });    
     const handleKeyDown = (event: KeyboardEvent) => {
       handleKeyPress(event);
     };
@@ -235,20 +290,26 @@ export default function AppIndex() {
     if(edge_type !=undefined && start_date != undefined && userids != undefined
       && egonet != undefined && showname != undefined) {
         const edgeTypeString = edge_type.toString()
-        const startDateString = start_date.toString()
+        let startDateString = start_date.toString()
         const egonetString = egonet.toString()
         const shownameString = showname.toString()
         const isMonthly = edgeTypeString.startsWith('month')
         const egoNet = egonetString == 'on'
         const showName = shownameString == 'on'
         const edgeThresholdString = edge_threshold?.toString() || '0'
-        console.log("edgeThresholdString:"+edgeThresholdString)
         setIsMonthly(isMonthly)
-        setDate(startDateString)
+        if (isMonthly) {
+          const yearMonth = startDateString.slice(0, 7)
+          startDateString = yearMonth
+          setDate(yearMonth)
+        } else {
+          setDate(startDateString)
+        }
         setEgoNetwork(egoNet)
         setShowName(showName)
         setTablename(edgeTypeString)
         setWeight(edgeThresholdString)
+        
         switch(edgeTypeString) {
           case 'daily_yell_core':
             setSelectedType('Core Fan')
@@ -261,21 +322,25 @@ export default function AppIndex() {
             break
           case 'monthly_coin_usage':
             setSelectedType('Coin Usage')
-            break              
+            break
+          case 'daily_item_usage_count':
+            setSelectedType('Item Usage')
+            break
+          case 'monthly_item_usage_count':
+            setSelectedType('Item Usage')
+            break
         }
         if (userids && typeof userids === 'string') {
           setUserIds(userids);
-          fetchData(edgeTypeString,userids,startDateString,isMonthly,egoNet,showName,edgeThresholdString)  
+          fetchData(edgeTypeString,userids,startDateString,isMonthly,egoNet,showName,edgeThresholdString,runPressed)  
         }
     }
-    console.log('Edge Type:', edge_type);
-    console.log('Start Date:', start_date);
-    console.log('User IDs:', userids);
-    console.log('Egonet:', egonet);
-    console.log('Show Name:', showname);
     if (updateTrigger) {
-      fetchData(tableName,userIds,date,isMonthly,egoNetwork,showName,weight)
+      fetchData(tableName,userIds,date,isMonthly,egoNetwork,showName,weight,runPressed)
       setUpdateTrigger(false);
+    }
+    if(runPressed) {
+      setRunPressed(false)
     }
 
     async function fetchData(tableName:string,
@@ -284,13 +349,14 @@ export default function AppIndex() {
                             isMonthly:boolean,
                             egoNetwork:boolean,
                             showName:boolean,
-                            weight: string) {
+                            weight: string,
+                            runPressed: boolean) {
       try {
         if((userIds.length== 0)|| (date.length==0)){
           return
         }
         setLoading(true); // Start loading indicator when API call begins
-        let dateParam = isMonthly?`date=${start_date}-01` : `date=${start_date}`;
+        let dateParam = isMonthly?`date=${date}-01` : `date=${date}`;
         let query = `${tableName}?${dateParam}&userids=${userIds.replace(/\s/g, '')}`;
         if(weight.length > 0) {
           query+= `&weight=${weight}`
@@ -300,6 +366,9 @@ export default function AppIndex() {
         } else {
           query+= `&egonet=off`
         }
+        query+= `&showname=${showName}`
+        query+= `&email=${email}`
+        query+= `&urllaunch=${!runPressed}`
         const apiUrl = `https://dena-pococha-ns-dev-gcp.an.r.appspot.com/api/data/${query}`;
         console.log('Url :'+ apiUrl)
         const response = await fetch(apiUrl);
@@ -402,11 +471,6 @@ export default function AppIndex() {
 
       network.on("stabilizationIterationsDone", function () {
         network.stopSimulation();
-          /*Object.values(networks).forEach((network) => {
-            if (network) {
-              network.setOptions( { physics: false } );
-            }
-          });*/      
       });
       
       network.once('afterDrawing', () => {
@@ -426,7 +490,7 @@ export default function AppIndex() {
       
       return network;
     }
-  }, [updateTrigger,JSON.stringify(router.query)]);
+  }, [email,updateTrigger,JSON.stringify(router.query)]);
 
   return (
     <div>
@@ -452,6 +516,15 @@ export default function AppIndex() {
               error={userIdError} // Apply error style
             />
           </Box>
+          <Box style={{ width: 180, marginRight: '8px',marginTop: '14px'}}>
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ height: 30, width: 180, marginLeft: '8px'}}
+            onClick={handleOpenModalGetLinks}>
+            Select from list
+          </Button>
+          </Box>
           <Box style={{ display: 'flex', alignItems: 'center', marginLeft: '0px',marginRight: '8px',marginTop: '16px'}}>
             <Checkbox
               checked={showName}
@@ -467,6 +540,7 @@ export default function AppIndex() {
             <Select style={{ fontSize: 10, height:30, width: 100}} value={selectedType} onChange={handleParamChange}>
             <MenuItem className={classes.menuItem} value="Core Fan">Core Fan</MenuItem>
             <MenuItem className={classes.menuItem} value="Coin Usage">Coin Usage</MenuItem>
+            <MenuItem className={classes.menuItem} value="Item Usage">Item Usage</MenuItem>
             </Select>
           </Box>
           <Box style={{ width: 128,marginTop: '16px',marginLeft: '8px', marginRight: '8px', display: 'flex', alignItems: 'center' }}>
@@ -533,6 +607,16 @@ export default function AppIndex() {
           </Button>
         </div>
         <Divider />
+        <ModalLists open={isModalGetLinksOpen} 
+        onClose={handleCloseModalGetLinks} 
+        openAddLinksModal={openAddLinksModal} 
+        refreshLinks={refreshLinksList}/>
+
+        <ModalAddLinks open={isModalAddLinksOpen} 
+        onClose={handleCloseModalAddLinks} 
+        onLinkSaved={refreshLinksList} 
+        isUserList={isUserList}
+        />
       </div>
       {loading ? (
         <Grid container className={classes.progressContainer}>
