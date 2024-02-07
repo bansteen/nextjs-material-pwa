@@ -49,15 +49,6 @@ export function transformResponse(serverResponse: ServerResponseItem[],
   const userIdArray = userIds.split(',');
   const transformedData: TransformedData[] = [];
   const groupedData: Record<string, ServerResponseItem[]> = {};
-  // const weekGroups = getWeeklyGroups(startDate);
-  // const firstEntry = serverResponse[0]
-  // if(firstEntry) {
-  //   if(!firstEntry.month){
-  //     weekGroups.forEach(weekKey => {
-  //       groupedData[weekKey]= []
-  //     });  
-  //   }
-  // }
   
   serverResponse.forEach(entry => {
 
@@ -139,40 +130,26 @@ export function transformResponse(serverResponse: ServerResponseItem[],
       edges: edges
     });
   }
+  if (Object.keys(groupedData).length === 0) {
+    const nodes: TransformedNode[] = [];
+    userIdArray.forEach(userId => {
+        nodes.push({
+            color: "#FFFF00", // Yellow color
+            font: { color: "#000000" },
+            id: userId,
+            label: userId,
+            shape: "dot",
+            size: 12
+        });
+    });
+
+    // Add the single timeframe group with all user nodes
+    transformedData.push({
+        timeFrame: '',
+        nodes: nodes,
+        edges: [] // No edges when data is empty
+    });
+  } 
 
   return transformedData;
 }
-
-
-/*function getWeeklyGroups(startDate: Date): string[] {
-  const weekGroups: string[] = [];
-  const daysInWeek = 7;
-  const weeksToGenerate = 5;
-
-  const nextWeekStart = new Date(startDate);
-  nextWeekStart.setDate(startDate.getDate() - 7)
-  const weekEnd = new Date(startDate);
-  weekEnd.setDate(startDate.getDate() - 1)
-  for (let i = 0; i < weeksToGenerate; i++) {
-    //console.log("startDate:" + nextWeekStart)
-    //console.log("endDate:" + weekEnd)
-    weekGroups.push(getWeekRange(nextWeekStart, weekEnd));
-    nextWeekStart.setDate(nextWeekStart.getDate() + daysInWeek); // Move to the next week start
-    weekEnd.setDate(weekEnd.getDate() + daysInWeek);
-  }
-  
-  return weekGroups;
-}
-
-
-function getWeekRange(startDate: Date, endDate:Date): string {
-  return `${formatDate(startDate)} to ${formatDate(endDate)}`;
-}
-
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}*/

@@ -5,6 +5,7 @@ import React from 'react';
 import { makeStyles } from '@mui/styles';
 import { useRouter } from 'next/router';
 import { getUserEmail } from '../_app'
+import html2canvas from 'html2canvas';
 import {
   Select, 
   MenuItem, 
@@ -17,11 +18,13 @@ import {
   Divider,
   Box,
   Typography,
+  IconButton,
   Dialog, 
   DialogTitle, 
   DialogContent, 
   DialogActions,
-  Checkbox
+  Checkbox,
+  Tooltip
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { DataSet } from 'vis-data';
@@ -29,6 +32,10 @@ import type { Node, Edge } from 'vis-network';
 import {ServerResponseItem, transformResponse } from '../../graphData/graphDataChangeConnections';
 import ModalLists from './modalGetLinks';
 import ModalAddLinks from './modalAddLinks';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StopIcon from '@mui/icons-material/Stop';
+import GetAppIcon from '@mui/icons-material/GetApp';
+import ListIcon from '@mui/icons-material/List';
 interface ErrorDialogProps {
   open: boolean;
   onClose: () => void;
@@ -59,12 +66,17 @@ const useStyles = makeStyles(() => ({
     boxSizing: 'border-box',
     margin: '0 auto',
   },
+  networkHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
   box: {
     width: '690px',
     height: '600px',
     // flex: 1,
     backgroundColor: 'white',
-    padding: '0px',
+    padding: '32px',
     margin: '0px',
     boxSizing: 'border-box',
   },
@@ -103,6 +115,10 @@ const useStyles = makeStyles(() => ({
 interface Networks {
   [key: string]: vis.Network | undefined;
 }
+interface ContainerNetworkMap {
+  containerId: string;
+  network: vis.Network;
+}
 export default function AppIndex() {
   const router = useRouter();
   const [networks, setNetworks] = useState<Networks>({}); 
@@ -124,7 +140,14 @@ export default function AppIndex() {
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [runPressed, setRunPressed] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [weight, setWeight] = useState('0'); // State for the date input
+  const [weight, setWeight] = useState('0'); 
+  const [selectedNodeId, setSelectedNodeId] = useState('');
+  const containerToNetworkMap: ContainerNetworkMap[] = [];
+  const [showGrid, setShowGrid] = useState<boolean>(false);
+  const [showGrid2, setShowGrid2] = useState<boolean>(false);
+  const [showGrid3, setShowGrid3] = useState<boolean>(false);
+  const [showGrid4, setShowGrid4] = useState<boolean>(false);
+  const [showGrid5, setShowGrid5] = useState<boolean>(false);
   const handleParamChange = (event: SelectChangeEvent<string>) => {
     setSelectedType(event.target.value as string);
     if(event.target.value == "Core Fan"){
@@ -137,6 +160,9 @@ export default function AppIndex() {
     }else if(event.target.value == "Item Usage"){
       setCoreFan(false)
       setTablename(isMonthly ? 'monthly_item_usage_count' : 'daily_item_usage_count')
+    }else if(event.target.value == "Paid Coins"){
+      setCoreFan(false)
+      setTablename(isMonthly ? 'monthly_paid_coin_usage' : 'daily_paid_coin_usage')
     }
   };
   const handleSwitchChange = () => {
@@ -168,8 +194,6 @@ export default function AppIndex() {
   
     // Split input by comma or space and trim each element
     const separatedIds = rawInput.split(/,|\s/).map(id => id.trim());
-  
-    // Join the IDs with a comma and update the state
     setUserIds(separatedIds.join(','));
   };
   const handleShowNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,7 +225,15 @@ export default function AppIndex() {
       generateUrl = true
       setDateError(false);
     }
-  
+    const separatedIds = userIds.split(/,|\s/).map(id => id.trim());
+    if (separatedIds.length > 100) {
+      setErrorDialogOpen(true);
+      setErrorMessage('Number of user IDs cannot exceed 100');      
+      generateUrl = false
+      if (runButtonRef.current) {
+        runButtonRef.current.focus();
+      }
+    }
     if (generateUrl) {
       const queryParams = {
         edge_type: tableName,
@@ -260,6 +292,41 @@ export default function AppIndex() {
   };
   const refreshLinksList = () => {
     setRefreshLinks((prev) => !prev);
+  };
+  const captureAndSaveImage = () => {
+    const maxCount = isMonthly? 1: 5
+    for (let i = 1; i <= maxCount; i++) {
+      const divId = `n${i}`;
+      const node = document.getElementById(divId); // Get the element by id
+
+      if (node) {
+        // Use html2canvas to capture the content of the div
+        html2canvas(node).then((canvas) => {
+          const dataUrl = canvas.toDataURL();
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `network${i}.png`
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
+      }      
+    }
+  };  
+  const handleShowGridChange = () => {
+    setShowGrid((prevShowGrid) => !prevShowGrid);
+  };
+  const handleShowGridChange2 = () => {
+    setShowGrid2((prevShowGrid) => !prevShowGrid);
+  };
+  const handleShowGridChange3 = () => {
+    setShowGrid3((prevShowGrid) => !prevShowGrid);
+  };
+  const handleShowGridChange4 = () => {
+    setShowGrid4((prevShowGrid) => !prevShowGrid);
+  };
+  const handleShowGridChange5 = () => {
+    setShowGrid5((prevShowGrid) => !prevShowGrid);
   };
   useEffect(() => {
     getUserEmail().then((userEmail) => {
@@ -329,6 +396,12 @@ export default function AppIndex() {
           case 'monthly_item_usage_count':
             setSelectedType('Item Usage')
             break
+          case 'monthly_paid_coin_usage':
+            setSelectedType('Paid Coins')
+            break
+          case 'daily_paid_coin_usage':
+            setSelectedType('Paid Coins')
+            break            
         }
         if (userids && typeof userids === 'string') {
           setUserIds(userids);
@@ -445,6 +518,7 @@ export default function AppIndex() {
             highlight: "FF0000"
           }
         },
+        layout: { randomSeed: 50 },
         physics: {
           forceAtlas2Based: {
             gravitationalConstant: -26,
@@ -460,7 +534,7 @@ export default function AppIndex() {
           maxVelocity: 146,
           solver: "forceAtlas2Based",
           timestep: 0.35,
-          stabilization: { iterations: 250 },
+          stabilization: { iterations: 500 }
         },        
       };
       
@@ -468,21 +542,51 @@ export default function AppIndex() {
       //options.configure.container = document.getElementById('config');
       
       network = new vis.Network(container, data, options);
+      containerToNetworkMap.push({ containerId: container.id, network: network });
+      network.on("select", function (params) {
+        var selectedNodeId = params.nodes[0];
+        setSelectedNodeId(selectedNodeId)
+        const containerId = 
+        containerToNetworkMap.find((item) => item.network === network)?.containerId;
+        const url = `https://ope.pococha.com/users/${selectedNodeId}`;
+        if(containerId) {
+          const containerElement = document.getElementById(containerId)?.parentElement?.parentElement;
+          if (containerElement) {
+            let urlElement = containerElement.querySelector('.user-url-element') as HTMLAnchorElement | null;
 
+            if (!urlElement) {
+              urlElement = document.createElement('a');
+              urlElement.href = url;
+              urlElement.target = '_blank';
+              urlElement.textContent = `Ope Link for user ID ${selectedNodeId}`;
+              urlElement.classList.add('user-url-element'); 
+              const h3Element = containerElement.querySelector('h3');
+              if (h3Element) {
+                h3Element.insertAdjacentElement('afterend', urlElement);
+              }
+            } else {
+              // If the URL element already exists, update its href attribute
+              urlElement.href = url;
+              urlElement.textContent = `Ope Link for user ID ${selectedNodeId}`;
+            }          
+          }
+        }
+    });
       network.on("stabilizationIterationsDone", function () {
         network.stopSimulation();
       });
       
       network.once('afterDrawing', () => {
         console.log("Drawing completed")
-        const h3Element = container.parentElement?.querySelector('h3');
+        const h3Element = container.parentElement?.parentElement?.querySelector('h3');
+
         if (h3Element) {
           h3Element.textContent = timeFrame;
         }
       });
       
       // Set the <h3> header to the timeFrame string
-      const h3Element = container.parentElement?.querySelector('h3');
+      const h3Element = container.parentElement?.parentElement?.querySelector('h3');
       if (h3Element) {
         h3Element.textContent = timeFrame + " ( now drawing...)";
       }
@@ -505,7 +609,7 @@ export default function AppIndex() {
           }}
         >
           <Box style={{ width: 260, marginRight: '8px'}}>
-            <InputLabel style={{ fontSize: 10}}>Enter user IDs separated by comma</InputLabel>
+            <InputLabel style={{ fontSize: 10}}>Enter user IDs separated by comma (Max input 100)</InputLabel>
             <TextField
               InputProps={{
                 style: { fontSize: 10, height: '30px' },
@@ -517,13 +621,15 @@ export default function AppIndex() {
             />
           </Box>
           <Box style={{ width: 180, marginRight: '8px',marginTop: '14px'}}>
-          <Button
-            variant="contained"
-            color="primary"
-            style={{ height: 30, width: 180, marginLeft: '8px'}}
-            onClick={handleOpenModalGetLinks}>
-            Select from list
-          </Button>
+          <Tooltip title="Select user ID" arrow>
+            <Button
+              variant="contained"
+              color="primary"
+              style={{ height: 30, width: 162, marginLeft: '8px'}}
+              onClick={handleOpenModalGetLinks}>
+              Select from list
+            </Button>
+          </Tooltip>
           </Box>
           <Box style={{ display: 'flex', alignItems: 'center', marginLeft: '0px',marginRight: '8px',marginTop: '16px'}}>
             <Checkbox
@@ -541,6 +647,7 @@ export default function AppIndex() {
             <MenuItem className={classes.menuItem} value="Core Fan">Core Fan</MenuItem>
             <MenuItem className={classes.menuItem} value="Coin Usage">Coin Usage</MenuItem>
             <MenuItem className={classes.menuItem} value="Item Usage">Item Usage</MenuItem>
+            <MenuItem className={classes.menuItem} value="Paid Coins">Paid Coins</MenuItem>
             </Select>
           </Box>
           <Box style={{ width: 128,marginTop: '16px',marginLeft: '8px', marginRight: '8px', display: 'flex', alignItems: 'center' }}>
@@ -588,23 +695,29 @@ export default function AppIndex() {
           </Box>
           
           <Divider orientation="vertical" flexItem />
-          <Button
-            ref={runButtonRef}
-            variant="contained"
-            color="primary"
-            style={{ height: 30, width: 48, marginLeft: '16px'}}
-            onClick={handleRunClick}>
-            Run
-          </Button>
-          
-
-          <Button
-            variant="contained"
-            color="primary"
-            style={{ height: 30, width: 160, marginLeft: '16px'}}
-            onClick={handleStopClick}>
-            Stop Movement
-          </Button>
+          <Grid container spacing={2}>
+            <Grid item>
+              <Grid container direction="column" alignItems="center">
+                <Tooltip title="Plot graphs below" arrow>
+                  <IconButton color="primary" onClick={handleRunClick} 
+                  ref={runButtonRef}>
+                    <PlayArrowIcon fontSize="large" />
+                  </IconButton>
+                </Tooltip>
+                <Typography align="center" variant="caption">Run</Typography>
+              </Grid>
+            </Grid>
+            <Grid item>
+              <Grid container direction="column" alignItems="center">
+                <Tooltip title="Download all graphs as PNG" arrow>
+                  <IconButton color="primary" onClick={captureAndSaveImage}>
+                    <GetAppIcon fontSize="large" />
+                  </IconButton>
+                </Tooltip>
+                <Typography align="center" variant="caption">Download</Typography>
+              </Grid>
+            </Grid>
+          </Grid>
         </div>
         <Divider />
         <ModalLists open={isModalGetLinksOpen} 
@@ -624,35 +737,456 @@ export default function AppIndex() {
         </Grid>
       ) : (
         <div className={classes.container}>
-          <div>
-            <h3>Date range1</h3>
-            <div id="mynetwork1" className={classes.box}>
+          <div id="n1">
+            <div className={classes.networkHeader}>
+              <h3>Date range 1</h3>
+              <Box id = "b1" style={{ display: 'flex', alignItems: 'center'}}>
+                <Checkbox
+                  checked={showGrid}
+                  onChange={handleShowGridChange}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Show Grid Checkbox' }}
+                  />
+                  <InputLabel style={{ fontSize: 12 }}>Show Grid</InputLabel>
+              </Box>              
             </div>
-          </div>
-          <div>
-            <h3>Date range2</h3>
-            <div id="mynetwork2" className={classes.box}>
+            <div id="gridoverlay1" style={{ position: 'relative' }}>
+                {showGrid && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage:
+                        'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+                      backgroundSize: '30px 30px',
+                      pointerEvents: 'none', // Make the overlay not clickable
+                      zIndex: 1, // Ensure it's above other content
+                    }}
+                  >
+                    {/* Add chess-like notations */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        color: 'black',
+                        fontSize: 12,
+                        textAlign: 'center',
+                      }}
+                    >
+                        {/* Vertical numbers */}
+                        {[...Array(19)].map((_, index) => (
+                        <div
+                          key={`v${index}`}
+                          style={{
+                            flex: '1 1 auto',
+                            width: '4%', // Adjusted width for better visualization
+                            textAlign: 'center',
+                            color: 'black',
+                            fontSize: 12,
+                            marginTop: index === 0 ? '32px' : '8px', // Set top margin to 32px for the first element
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                      {/* Horizontal alphabets */}
+                      {Array.from({ length: 23 }, (_, index) => String.fromCharCode(64 + index)).map(
+                        (letter, index) => (
+                          <div
+                            key={`h${index}`}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: `${(index / 23) * 100}%`,
+                              width: '4%',
+                              height: '100%',
+                              textAlign: 'center',
+                              color: 'black',
+                              fontSize: 12,
+                            }}
+                          >
+                            {letter}
+                          </div>
+                        )
+                      )}                  
+                    </div>
+                    
+                  </div>
+                )}           
+                <div id="mynetwork1" className={classes.box}>
+                </div>
             </div>
-          </div>
-          <div>
-            <h3>Date range3</h3>
-            <div id="mynetwork3" className={classes.box}>
+          </div>          
+          <div id="n2">
+            <div className={classes.networkHeader}>
+              <h3>Date range 2</h3>
+              <Box id = "b1" style={{ display: 'flex', alignItems: 'center'}}>
+                <Checkbox
+                  checked={showGrid2}
+                  onChange={handleShowGridChange2}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Show Grid Checkbox' }}
+                  />
+                  <InputLabel style={{ fontSize: 12 }}>Show Grid</InputLabel>
+              </Box>              
             </div>
-          </div>
-          <div>
-            <h3>Date range4</h3>
-            <div id="mynetwork4" className={classes.box}>
+            <div id="gridoverlay1" style={{ position: 'relative' }}>
+                {showGrid2 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage:
+                        'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+                      backgroundSize: '30px 30px',
+                      pointerEvents: 'none', // Make the overlay not clickable
+                      zIndex: 1, // Ensure it's above other content
+                    }}
+                  >
+                    {/* Add chess-like notations */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        color: 'black',
+                        fontSize: 12,
+                        textAlign: 'center',
+                      }}
+                    >
+                        {/* Vertical numbers */}
+                        {[...Array(19)].map((_, index) => (
+                        <div
+                          key={`v${index}`}
+                          style={{
+                            flex: '1 1 auto',
+                            width: '4%', // Adjusted width for better visualization
+                            textAlign: 'center',
+                            color: 'black',
+                            fontSize: 12,
+                            marginTop: index === 0 ? '32px' : '8px', // Set top margin to 32px for the first element
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                      {/* Horizontal alphabets */}
+                      {Array.from({ length: 23 }, (_, index) => String.fromCharCode(64 + index)).map(
+                        (letter, index) => (
+                          <div
+                            key={`h${index}`}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: `${(index / 23) * 100}%`,
+                              width: '4%',
+                              height: '100%',
+                              textAlign: 'center',
+                              color: 'black',
+                              fontSize: 12,
+                            }}
+                          >
+                            {letter}
+                          </div>
+                        )
+                      )}                  
+                    </div>
+                    
+                  </div>
+                )}           
+                <div id="mynetwork2" className={classes.box}>
+                </div>
             </div>
-          </div>
-          <div>
-            <h3>Date range5</h3>
-            <div id="mynetwork5" className={classes.box}></div>
-          </div>
-          <div>
+          </div>          
+          <div id="n3">
+            <div className={classes.networkHeader}>
+              <h3>Date range 3</h3>
+              <Box id = "b1" style={{ display: 'flex', alignItems: 'center'}}>
+                <Checkbox
+                  checked={showGrid3}
+                  onChange={handleShowGridChange3}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Show Grid Checkbox' }}
+                  />
+                  <InputLabel style={{ fontSize: 12 }}>Show Grid</InputLabel>
+              </Box>              
+            </div>
+            <div id="gridoverlay1" style={{ position: 'relative' }}>
+                {showGrid3 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage:
+                        'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+                      backgroundSize: '30px 30px',
+                      pointerEvents: 'none', // Make the overlay not clickable
+                      zIndex: 1, // Ensure it's above other content
+                    }}
+                  >
+                    {/* Add chess-like notations */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        color: 'black',
+                        fontSize: 12,
+                        textAlign: 'center',
+                      }}
+                    >
+                        {/* Vertical numbers */}
+                        {[...Array(19)].map((_, index) => (
+                        <div
+                          key={`v${index}`}
+                          style={{
+                            flex: '1 1 auto',
+                            width: '4%', // Adjusted width for better visualization
+                            textAlign: 'center',
+                            color: 'black',
+                            fontSize: 12,
+                            marginTop: index === 0 ? '32px' : '8px', // Set top margin to 32px for the first element
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                      {/* Horizontal alphabets */}
+                      {Array.from({ length: 23 }, (_, index) => String.fromCharCode(64 + index)).map(
+                        (letter, index) => (
+                          <div
+                            key={`h${index}`}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: `${(index / 23) * 100}%`,
+                              width: '4%',
+                              height: '100%',
+                              textAlign: 'center',
+                              color: 'black',
+                              fontSize: 12,
+                            }}
+                          >
+                            {letter}
+                          </div>
+                        )
+                      )}                  
+                    </div>
+                    
+                  </div>
+                )}           
+                <div id="mynetwork3" className={classes.box}>
+                </div>
+            </div>
+          </div>          
+          <div id="n4">
+            <div className={classes.networkHeader}>
+              <h3>Date range 4</h3>
+              <Box id = "b1" style={{ display: 'flex', alignItems: 'center'}}>
+                <Checkbox
+                  checked={showGrid4}
+                  onChange={handleShowGridChange4}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Show Grid Checkbox' }}
+                  />
+                  <InputLabel style={{ fontSize: 12 }}>Show Grid</InputLabel>
+              </Box>              
+            </div>
+            <div id="gridoverlay1" style={{ position: 'relative' }}>
+                {showGrid4 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage:
+                        'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+                      backgroundSize: '30px 30px',
+                      pointerEvents: 'none', // Make the overlay not clickable
+                      zIndex: 1, // Ensure it's above other content
+                    }}
+                  >
+                    {/* Add chess-like notations */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        color: 'black',
+                        fontSize: 12,
+                        textAlign: 'center',
+                      }}
+                    >
+                        {/* Vertical numbers */}
+                        {[...Array(19)].map((_, index) => (
+                        <div
+                          key={`v${index}`}
+                          style={{
+                            flex: '1 1 auto',
+                            width: '4%', // Adjusted width for better visualization
+                            textAlign: 'center',
+                            color: 'black',
+                            fontSize: 12,
+                            marginTop: index === 0 ? '32px' : '8px', // Set top margin to 32px for the first element
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                      {/* Horizontal alphabets */}
+                      {Array.from({ length: 23 }, (_, index) => String.fromCharCode(64 + index)).map(
+                        (letter, index) => (
+                          <div
+                            key={`h${index}`}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: `${(index / 23) * 100}%`,
+                              width: '4%',
+                              height: '100%',
+                              textAlign: 'center',
+                              color: 'black',
+                              fontSize: 12,
+                            }}
+                          >
+                            {letter}
+                          </div>
+                        )
+                      )}                  
+                    </div>
+                    
+                  </div>
+                )}           
+                <div id="mynetwork4" className={classes.box}>
+                </div>
+            </div>
+          </div>          
+          <div id="n5">
+            <div className={classes.networkHeader}>
+              <h3>Date range 5</h3>
+              <Box id = "b1" style={{ display: 'flex', alignItems: 'center'}}>
+                <Checkbox
+                  checked={showGrid5}
+                  onChange={handleShowGridChange5}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Show Grid Checkbox' }}
+                  />
+                  <InputLabel style={{ fontSize: 12 }}>Show Grid</InputLabel>
+              </Box>              
+            </div>
+            <div id="gridoverlay1" style={{ position: 'relative' }}>
+                {showGrid5 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage:
+                        'linear-gradient(to right, rgba(0, 0, 0, 0.9) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 1px, transparent 1px)',
+                      backgroundSize: '30px 30px',
+                      pointerEvents: 'none', // Make the overlay not clickable
+                      zIndex: 1, // Ensure it's above other content
+                    }}
+                  >
+                    {/* Add chess-like notations */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        color: 'black',
+                        fontSize: 12,
+                        textAlign: 'center',
+                      }}
+                    >
+                        {/* Vertical numbers */}
+                        {[...Array(19)].map((_, index) => (
+                        <div
+                          key={`v${index}`}
+                          style={{
+                            flex: '1 1 auto',
+                            width: '4%', // Adjusted width for better visualization
+                            textAlign: 'center',
+                            color: 'black',
+                            fontSize: 12,
+                            marginTop: index === 0 ? '32px' : '8px', // Set top margin to 32px for the first element
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                      {/* Horizontal alphabets */}
+                      {Array.from({ length: 23 }, (_, index) => String.fromCharCode(64 + index)).map(
+                        (letter, index) => (
+                          <div
+                            key={`h${index}`}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: `${(index / 23) * 100}%`,
+                              width: '4%',
+                              height: '100%',
+                              textAlign: 'center',
+                              color: 'black',
+                              fontSize: 12,
+                            }}
+                          >
+                            {letter}
+                          </div>
+                        )
+                      )}                  
+                    </div>
+                    
+                  </div>
+                )}           
+                <div id="mynetwork5" className={classes.box}>
+                </div>
+            </div>
+          </div>          
+          <div id="n6">
             <div id="empty" className={classes.emptyBox}></div>
           </div>
           <div id="config"></div>
-        </div>
+        </div>      
       )} 
         {/* ErrorDialog component */}
         <ErrorDialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)} message={errorMessage} />
